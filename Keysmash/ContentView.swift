@@ -28,6 +28,16 @@ struct ContentView: View {
             }
         }
         .frame(height: segmentRaisedHeight, alignment: .bottom)
+        .overlay(alignment: .bottomLeading) {
+            ForEach(manager.boats) { boat in
+                UnevenRoundedRectangle(cornerRadii: .init(bottomLeading: 10, bottomTrailing: 10))
+                    .fill(Color.brown)
+                    .frame(width: 100, height: 20)
+                    .rotationEffect(boat.angle, anchor: .bottom)
+                    .offset(x: -50)
+                    .offset(x: boat.coordinate.x, y: -boat.coordinate.y)
+            }
+        }
         .overlay {
             Path { path in
                 let startingPoint = CGPoint(x: 0, y: segmentDefaultHeight)
@@ -53,8 +63,8 @@ struct ContentView: View {
                 manager.update(forEvent: event)
             }
         }
-        .onReceive(gameTimer) { _ in
-            manager.tick()
+        .onReceive(gameTimer) { date in
+            manager.tick(date: date)
         }
     }
 }
@@ -65,9 +75,27 @@ class GameManager {
     var currentlyPressedKeys: [String: KeyState]
     var keyHeight: [String: CGFloat]
 
+    var boats: [Boat]
+
+    var prevTick: Date?
+
     struct KeyState: Hashable {
         var isPressed: Bool
         var lastChanged: Date
+    }
+
+    struct Boat: Identifiable, Hashable {
+        var id: UUID = .init()
+        // Coordinate of the bottom-center of the boat, offset from the bottom-left
+        var coordinate: CGPoint
+        // The angle of the boat, in clockwise degrees from flat
+        var angle: Angle
+        // The horizontal velocity of the boat (vertical position is determined by water level)
+        var velocity: CGFloat
+        // The maximum acceleration of the boat
+        let acceleration: CGFloat = 50 // full acceleration is 100 units/s^2
+        // The speed decay of the boat, in m/s^2
+        let decay: CGFloat = 5
     }
 
     init(keysStr: String = "QWERTYUIOPASDFGHJKLZXCVBNM") {
@@ -82,6 +110,13 @@ class GameManager {
             uniqueKeysWithValues: keyLayout
                 .map { ($0, segmentDefaultHeight) }
         )
+        self.boats = [
+            .init(
+                coordinate: .init(x: 0, y: segmentDefaultHeight),
+                angle: .zero,
+                velocity: 30 // 30 points per second
+            )
+        ]
     }
 
     func update(forEvent event: KeyEventInfo) {
@@ -102,6 +137,8 @@ class GameManager {
     }
 
     func tick(date: Date = .now) {
+        defer { self.prevTick = date }
+
         // recalculate all key heights
         keyHeight = currentlyPressedKeys.mapValues { state in
             if state.isPressed {
@@ -115,6 +152,46 @@ class GameManager {
                     exp(-3/deactivationTime * date.timeIntervalSince(state.lastChanged))
                 )
             }
+        }
+
+        // skip first tick for velocity calculations
+        guard let prevTick else { return }
+        let dt = date.timeIntervalSince(prevTick)
+
+        // calculate velocity of boat
+        for (arrayIndex, boat) in boats.enumerated() {
+            var newBoat = boat
+
+            // if the boat is within the wave area, update its velocity and angle accordingly
+            let index = Int((boat.coordinate.x + 0.5) / segmentWidth)
+            if 0 <= index, index <= keyLayout.count { // index is within the key layout
+                // 0 = to the left of the leftmost key
+                // keyLayout.count = to the right of the rightmost key
+
+                let lhsHeight = if index > 0 {
+                    keyHeight[keyLayout[index-1]] ?? segmentDefaultHeight
+                } else { segmentDefaultHeight }
+                let rhsHeight = if index < keyLayout.count {
+                    keyHeight[keyLayout[index]] ?? segmentDefaultHeight
+                } else { segmentDefaultHeight }
+
+                let opp = rhsHeight - lhsHeight // height diff
+                let gradient = opp / segmentWidth
+
+                newBoat.angle = .radians(-atan(gradient))
+                newBoat.velocity -= newBoat.acceleration * opp / sqrt(segmentWidth*segmentWidth + opp*opp) // opp / hyp
+            } else {
+                // collision detection - it went too far to either side, make it bounce with 50% decay in velocity and also return it
+                newBoat.velocity *= -0.5
+                newBoat.coordinate.x = max(0, min(newBoat.coordinate.x, segmentWidth * CGFloat(keyLayout.count)))
+
+                newBoat.angle = .zero
+            }
+            newBoat.velocity -= newBoat.decay * dt
+
+            newBoat.coordinate.x += newBoat.velocity * dt
+
+            boats[arrayIndex] = newBoat
         }
     }
 }
