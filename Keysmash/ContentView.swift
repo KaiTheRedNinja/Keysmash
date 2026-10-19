@@ -93,13 +93,13 @@ class GameManager {
         // The horizontal velocity of the boat (vertical position is determined by water level)
         var velocity: CGFloat
         // The maximum acceleration of the boat
-        let acceleration: CGFloat = 50 // full acceleration is 100 units/s^2
+        let acceleration: CGFloat = 20 // full acceleration is 20 units/s^2
         // The speed decay of the boat, in m/s^2
         let decay: CGFloat = 5
     }
 
-    init(keysStr: String = "QWERTYUIOPASDFGHJKLZXCVBNM") {
-        self.keyLayout = "QWERTYUIOPASDFGHJKLZXCVBNM".map { String($0) }
+    init(keysStr: String = "qazwsxedcrfvtgbyhnujmik,ol.p;/") {
+        self.keyLayout = keysStr.map { String($0).uppercased() }
         precondition(keyLayout.count == Set(keyLayout).count, "Keysstr must not contain duplicates")
 
         self.currentlyPressedKeys = .init(
@@ -180,10 +180,14 @@ class GameManager {
 
                 newBoat.angle = .radians(-atan(gradient))
                 newBoat.velocity -= newBoat.acceleration * opp / sqrt(segmentWidth*segmentWidth + opp*opp) // opp / hyp
+
+                let positionInIndex = (boat.coordinate.x + 0.5).remainder(dividingBy: segmentWidth) / segmentWidth
+                newBoat.coordinate.y = (lhsHeight * (1 - positionInIndex)) + (rhsHeight * positionInIndex)
             } else {
                 // collision detection - it went too far to either side, make it bounce with 50% decay in velocity and also return it
                 newBoat.velocity *= -0.5
                 newBoat.coordinate.x = max(0, min(newBoat.coordinate.x, segmentWidth * CGFloat(keyLayout.count)))
+                newBoat.coordinate.y = segmentDefaultHeight
 
                 newBoat.angle = .zero
             }
