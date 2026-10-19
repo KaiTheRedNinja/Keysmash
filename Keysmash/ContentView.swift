@@ -37,20 +37,15 @@ struct ContentView: View {
         }
         .overlay {
             Path { path in
-                let startingPoint = CGPoint(x: 0, y: segmentDefaultHeight)
-                let endingPoint = CGPoint(x: segmentWidth * CGFloat(manager.keyLayout.count), y: segmentDefaultHeight)
-                path.move(to: startingPoint)
-                var previous: CGPoint = startingPoint
-                for (index, key) in manager.keyLayout.enumerated() {
-                    let coordinate = CGPoint(x: segmentWidth * (CGFloat(index) + 0.5), y: manager.keyHeight[key] ?? 0)
+                path.move(to: manager.keyLine.start)
 
-                    // control is midpoint of previous and coordinate
-                    let control1 = CGPoint(x: (previous.x + coordinate.x)/2, y: previous.y)
-                    let control2 = CGPoint(x: (previous.x + coordinate.x)/2, y: coordinate.y)
-                    path.addCurve(to: coordinate, control1: control1, control2: control2)
-                    previous = coordinate
+                for segment in manager.keyLine.segments {
+                    path.addCurve(
+                        to: segment.end,
+                        control1: segment.control1,
+                        control2: segment.control2
+                    )
                 }
-                path.addLine(to: endingPoint)
             }
             .scale(x: 1, y: -1) // vertically flip
             .stroke(Color.red, lineWidth: 4)
@@ -65,4 +60,3 @@ struct ContentView: View {
         }
     }
 }
-
