@@ -6,8 +6,13 @@
 	objectVersion = 90;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		93C0B93030866EDF002E593E /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 93C0B92F30866EDD002E593E /* README.md */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		000000000000000000000120 /* Keysmash.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Keysmash.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		93C0B92F30866EDD002E593E /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -30,6 +35,7 @@
 		000000000000000000000001 = {
 			isa = PBXGroup;
 			children = (
+				93C0B92F30866EDD002E593E /* README.md */,
 				000000000000000000000010 /* Keysmash */,
 				000000000000000000000020 /* Products */,
 			);
@@ -102,6 +108,7 @@
 		000000000000000140000000 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
+				93C0B93030866EDF002E593E /* README.md in Resources */,
 			);
 		};
 /* End PBXResourcesBuildPhase section */
