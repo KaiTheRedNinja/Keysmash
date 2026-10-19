@@ -1,24 +1,25 @@
 import SwiftUI
-
-var keyLayout = "QWERTYUIOPASDFGHJKLZXCVBNM".map { String($0) }
+import Combine
 
 let segmentWidth: CGFloat = 20
 let segmentDefaultHeight: CGFloat = 30
 let segmentRaisedHeight: CGFloat = 60
 
+let activationTime: TimeInterval = 1 // takes 1s to build up fully
+let deactivationTime: TimeInterval = 0.5 // takes 0.5s to dissipate
+
 struct ContentView: View {
-    @State var keyboardState: KeyboardState = .init(keys: keyLayout)
+    @State var manager: GameManager = .init()
+    var gameTimer = Timer.publish(every: 1/60, on: .main, in: .default).autoconnect()
 
     var body: some View {
         HStack(alignment: .bottom, spacing: 0) {
-            ForEach(keyLayout.enumerated(), id: \.offset) { (_, key) in
-                let isPressed = keyboardState.currentlyPressedKeys[key]?.isPressed ?? false
-
+            ForEach(manager.keyLayout.enumerated(), id: \.offset) { (_, key) in
                 Rectangle()
                     .fill(Color.blue)
                     .frame(
                         width: segmentWidth,
-                        height: isPressed ? segmentRaisedHeight : segmentDefaultHeight
+                        height: manager.keyHeight[key] ?? 0
                     )
                     .overlay(alignment: .bottom) {
                         Text(key)
@@ -30,12 +31,11 @@ struct ContentView: View {
         .overlay {
             Path { path in
                 let startingPoint = CGPoint(x: 0, y: segmentDefaultHeight)
-                let endingPoint = CGPoint(x: segmentWidth * CGFloat(keyLayout.count), y: segmentDefaultHeight)
+                let endingPoint = CGPoint(x: segmentWidth * CGFloat(manager.keyLayout.count), y: segmentDefaultHeight)
                 path.move(to: startingPoint)
                 var previous: CGPoint = startingPoint
-                for (index, key) in keyLayout.enumerated() {
-                    let isPressed = keyboardState.currentlyPressedKeys[key]?.isPressed ?? false
-                    let coordinate = CGPoint(x: segmentWidth * (CGFloat(index) + 0.5), y: isPressed ? segmentRaisedHeight : segmentDefaultHeight)
+                for (index, key) in manager.keyLayout.enumerated() {
+                    let coordinate = CGPoint(x: segmentWidth * (CGFloat(index) + 0.5), y: manager.keyHeight[key] ?? 0)
 
                     // control is midpoint of previous and coordinate
                     let control1 = CGPoint(x: (previous.x + coordinate.x)/2, y: previous.y)
@@ -50,33 +50,48 @@ struct ContentView: View {
         }
         .background {
             KeyCaptureView { event in
-                withAnimation(.interactiveSpring) {
-                    keyboardState.update(forEvent: event)
-                }
+                manager.update(forEvent: event)
             }
+        }
+        .onReceive(gameTimer) { _ in
+            manager.tick()
         }
     }
 }
 
-struct KeyboardState: Hashable {
+@Observable
+class GameManager {
+    let keyLayout: [String]
+    var currentlyPressedKeys: [String: KeyState]
+    var keyHeight: [String: CGFloat]
+
     struct KeyState: Hashable {
         var isPressed: Bool
         var lastChanged: Date
     }
 
-    /// All keys and their current state
-    var currentlyPressedKeys: [String: KeyState]
+    init(keysStr: String = "QWERTYUIOPASDFGHJKLZXCVBNM") {
+        self.keyLayout = "QWERTYUIOPASDFGHJKLZXCVBNM".map { String($0) }
+        precondition(keyLayout.count == Set(keyLayout).count, "Keysstr must not contain duplicates")
 
-    init(keys: any Sequence<String>) {
-        currentlyPressedKeys = .init(
-            uniqueKeysWithValues: keys
+        self.currentlyPressedKeys = .init(
+            uniqueKeysWithValues: keyLayout
                 .map { ($0, KeyState(isPressed: false, lastChanged: .distantPast)) }
+        )
+        self.keyHeight = .init(
+            uniqueKeysWithValues: keyLayout
+                .map { ($0, segmentDefaultHeight) }
         )
     }
 
-    mutating func update(forEvent event: KeyEventInfo) {
-        guard currentlyPressedKeys[event.physicalKeyName] != nil else {
+    func update(forEvent event: KeyEventInfo) {
+        guard let oldState = currentlyPressedKeys[event.physicalKeyName] else {
             print("No physical key registered: \(event.physicalKeyName)")
+            return
+        }
+        guard !event.isRepeat, oldState.isPressed != (event.phase == .down) else {
+            // key repeats are ignored
+            // and so are repeats of the same keyup/keydown call
             return
         }
 
@@ -84,5 +99,22 @@ struct KeyboardState: Hashable {
             isPressed: event.phase == .down,
             lastChanged: .now
         )
+    }
+
+    func tick(date: Date = .now) {
+        // recalculate all key heights
+        keyHeight = currentlyPressedKeys.mapValues { state in
+            if state.isPressed {
+                // increasing decay curve
+                segmentDefaultHeight + (segmentRaisedHeight - segmentDefaultHeight) * (
+                    1 - exp(-3/activationTime * date.timeIntervalSince(state.lastChanged))
+                )
+            } else {
+                // decreasing decay curve
+                segmentDefaultHeight + (segmentRaisedHeight - segmentDefaultHeight) * (
+                    exp(-3/deactivationTime * date.timeIntervalSince(state.lastChanged))
+                )
+            }
+        }
     }
 }
