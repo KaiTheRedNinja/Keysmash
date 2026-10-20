@@ -45,12 +45,12 @@ class GameManager {
         )
         self.keyHeight = .init(
             uniqueKeysWithValues: keyLayout
-                .map { ($0, segmentDefaultHeight) }
+                .map { ($0, 0) }
         )
         self.keyLine = .init(start: .zero, segments: [])
         self.boats = [
             .init(
-                coordinate: .init(x: 0, y: segmentDefaultHeight),
+                coordinate: .init(x: 0, y: 0),
                 angle: .zero,
                 velocity: 30 // 30 points per second
             )

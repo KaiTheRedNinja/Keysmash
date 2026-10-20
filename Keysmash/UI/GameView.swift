@@ -8,14 +8,28 @@
 import SwiftUI
 import Combine
 
+/// The width of a single wave segment
 let segmentWidth: CGFloat = 40
-let segmentDefaultHeight: CGFloat = 60
-let segmentRaisedHeight: CGFloat = 120
+/// The maximum height a wave can be, relative to sea level
+let segmentSwell: CGFloat = 60
+/// The sea level of the wave, relative to the bottom of the canvas
+let segmentSeaLevel: CGFloat = 300
+/// The total width of the monster
 let monsterWidth: CGFloat = 40 * 3
+
+/// The vertical misalignment of keys
+let keyVerticalMisalignment: CGFloat = 20
 
 struct GameView: View {
     @State var manager: GameManager = .init()
     var gameTimer = Timer.publish(every: 1/60, on: .main, in: .default).autoconnect()
+
+    var yLevel: [String: Int] = .init(
+        "QWERTYUIOP[]\\".map { (String($0), 0) } +
+        "ASDFGHJKL;'".map { (String($0), 1) } +
+        "ZXCVBNM,./".map { (String($0), 2) },
+        uniquingKeysWith: { lhs, _ in lhs }
+    )
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -23,17 +37,6 @@ struct GameView: View {
                 .frame(width: screenSize.width, height: screenSize.height, alignment: .center)
 
             ZStack(alignment: .bottomLeading) {
-                ForEach(manager.keyLayout.enumerated(), id: \.offset) { (_, key) in
-                    Text(key)
-                        .padding(.bottom, 5)
-                        .frame(
-                            width: segmentWidth,
-                            height: manager.keyHeight[key] ?? 0
-                        )
-                        .padding(.leading, (manager.keyLocations[key] ?? 0) - segmentWidth / 2)
-                }
-            }
-            .background(alignment: .bottom) {
                 Path { path in
                     path.move(to: manager.keyLine.start)
 
@@ -45,23 +48,34 @@ struct GameView: View {
                         )
                     }
 
-                    path.addLine(to: .init(x: manager.keyLine.segments.last?.end.x ?? 0, y: 0))
-                    path.addLine(to: .init(x: 0, y: 0))
+                    path.addLine(to: .init(x: manager.keyLine.segments.last?.end.x ?? 0, y: -segmentSeaLevel))
+                    path.addLine(to: .init(x: 0, y: -segmentSeaLevel))
                     path.closeSubpath()
                 }
                 .scale(x: 1, y: -1) // vertically flip
                 .fill(Color.blue.opacity(0.8))
-                .frame(height: segmentRaisedHeight, alignment: .bottom)
-            }
-            .overlay(alignment: .bottomLeading) {
+                .frame(height: segmentSwell, alignment: .bottom)
+
+                ForEach(manager.keyLayout.enumerated(), id: \.offset) { (_, key) in
+                    Text(key)
+                        .padding(.bottom, 5)
+                        .frame(
+                            width: segmentWidth,
+                            height: segmentWidth
+                        )
+                        .padding(.leading, (manager.keyLocations[key] ?? 0) - segmentWidth / 2)
+                        .offset(y: segmentWidth - (manager.keyHeight[key] ?? 0) + CGFloat(yLevel[key] ?? 0) * keyVerticalMisalignment)
+                }
+
                 ForEach(manager.boats) { boat in
                     BoatView(boat: boat)
                         .offset(x: -50)
                         .offset(x: boat.coordinate.x, y: -boat.coordinate.y)
                 }
             }
+            .frame(width: manager.canvasWidth)
             .border(Color.purple)
-            .padding(.bottom, 100)
+            .padding(.bottom, segmentSeaLevel)
         }
         .background {
             KeyCaptureView { event in

@@ -25,12 +25,12 @@ extension GameManager {
         let newKeyHeight = currentlyPressedKeys.mapValues { state in
             if state.isPressed {
                 // increasing decay curve
-                segmentDefaultHeight + (segmentRaisedHeight - segmentDefaultHeight) * (
+                segmentSwell * (
                     1 - exp(-3/activationTime * date.timeIntervalSince(state.lastChanged))
                 )
             } else {
                 // decreasing decay curve
-                segmentDefaultHeight + (segmentRaisedHeight - segmentDefaultHeight) * (
+                segmentSwell * (
                     exp(-3/deactivationTime * date.timeIntervalSince(state.lastChanged))
                 )
             }
@@ -41,7 +41,7 @@ extension GameManager {
         for (index, key) in keyLayout.enumerated() {
             let samples = ((-blurRadius + index)...(blurRadius + index)).compactMap { sampleIndex in
                 if 0 <= sampleIndex && sampleIndex < keyLayout.count {
-                    newKeyHeight[keyLayout[sampleIndex]] ?? segmentDefaultHeight
+                    newKeyHeight[keyLayout[sampleIndex]] ?? 0
                 } else { nil }
             }
             keyHeight[key] = samples.reduce(0, +) / CGFloat(samples.count)
@@ -49,10 +49,10 @@ extension GameManager {
 
         // we have the bezier, but also add points for the canvas's and the monster's LHS and RHS.
         let points: [CGPoint] = [
-            CGPoint(x: 0, y: segmentDefaultHeight), // leftmost point
-            CGPoint(x: monsterLocation + segmentWidth / 2, y: segmentDefaultHeight), // leftmost monster location
-            CGPoint(x: monsterLocation + monsterWidth - segmentWidth / 2, y: segmentDefaultHeight), // rightmost monster location
-            CGPoint(x: segmentWidth * CGFloat(keyLayout.count) + monsterWidth, y: segmentDefaultHeight) // rightmost point
+            CGPoint(x: 0, y: 0), // leftmost point
+            CGPoint(x: monsterLocation + segmentWidth / 2, y: 0), // leftmost monster location
+            CGPoint(x: monsterLocation + monsterWidth - segmentWidth / 2, y: 0), // rightmost monster location
+            CGPoint(x: segmentWidth * CGFloat(keyLayout.count) + monsterWidth, y: 0) // rightmost point
         ] + keyLayout.enumerated().map { (index, key) in CGPoint(x: keyLocations[key] ?? 0, y: keyHeight[key] ?? 0) } // beziers
 
         self.keyLine = .init(
@@ -76,7 +76,7 @@ extension GameManager {
                         c2: segment.control2,
                         p1: segment.end,
                         atX: newBoat.coordinate.x
-                    )!
+                    ) ?? 0
 
                     let yValue = bezierY(
                         p0: start,
@@ -84,7 +84,7 @@ extension GameManager {
                         c2: segment.control2,
                         p1: segment.end,
                         atX: newBoat.coordinate.x
-                    ) ?? segmentDefaultHeight
+                    ) ?? 0
 
                     newBoat.angle = .radians(-atan(gradient))
                     newBoat.velocity += newBoat.acceleration * sin(newBoat.angle.radians)
@@ -94,7 +94,7 @@ extension GameManager {
                 // collision detection - it went too far to either side, make it bounce with 50% decay in velocity and also return it
                 newBoat.velocity *= -0.5
                 newBoat.coordinate.x = max(0, min(newBoat.coordinate.x, segmentWidth * CGFloat(keyLayout.count)))
-                newBoat.coordinate.y = segmentDefaultHeight
+                newBoat.coordinate.y = 0
 
                 newBoat.angle = .zero
             }
