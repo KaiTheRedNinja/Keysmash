@@ -136,15 +136,19 @@ extension GameManager {
         // determine the boat's status
         if boatInBounds {
             // if the boat's hitbox is inside the monster's mouth, it goes into the monster's mouth
-            if monsterLocation < boat.coordinate.x, boat.coordinate.x < monsterLocation + monsterWidth {
+            if monsterLocation + segmentWidth < boat.coordinate.x, boat.coordinate.x < monsterLocation + monsterWidth - segmentWidth {
                 // boat is inside monster's mouth
+                if newBoat.status != .eaten {
+                    newBoat.velocity = 0
+                }
                 newBoat.status = .eaten
-                newBoat.velocity = 0
-                newBoat.coordinate.y -= 300 * dt // boat sinks at 300 points per second
-                newBoat.angle += .degrees(360) * dt // and rotates at 1 rot/s
+                newBoat.coordinate.x = boat.coordinate.x // undo horizontal velocity
+                newBoat.velocity += 300 * dt
+                newBoat.coordinate.y -= newBoat.velocity * dt // boat sinks at 300 points/s^2
+                newBoat.angle += .degrees(360) * dt * (newBoat.coordinate.x < canvasWidth/2 ? 1 : -1) // and rotates at 1 rot/s
 
-                // if the boat is under 100 points, delete it
-                if newBoat.coordinate.y < -100 {
+                // if the boat is under the sea, delete it
+                if newBoat.coordinate.y < -segmentSeaLevel {
                     spawnNewBoat()
                     return nil
                 }

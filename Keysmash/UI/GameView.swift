@@ -73,6 +73,10 @@ struct GameView: View {
                         .offset(x: -50)
                         .offset(x: boat.coordinate.x, y: -boat.coordinate.y)
                 }
+
+                MonsterView()
+                    .padding(.bottom, -segmentSeaLevel)
+                    .padding(.leading, manager.monsterLocation)
             }
             .frame(width: manager.canvasWidth)
             .border(Color.purple)
@@ -101,5 +105,12 @@ struct BoatView: View {
             }
             .rotationEffect(boat.angle, anchor: .bottom)
             .animation(.interactiveSpring, value: boat.angle)
+    }
+}
+
+struct MonsterView: View {
+    var body: some View {
+        Rectangle()
+            .frame(width: monsterWidth, height: segmentSeaLevel)
     }
 }
