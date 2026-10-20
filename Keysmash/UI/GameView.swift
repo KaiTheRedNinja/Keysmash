@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Combine
+import OrderedCollections
 
 /// The width of a single wave segment
 let segmentWidth: CGFloat = 40
@@ -67,7 +68,7 @@ struct GameView: View {
                         .offset(y: segmentWidth - (manager.keyHeight[key] ?? 0) + CGFloat(yLevel[key] ?? 0) * keyVerticalMisalignment)
                 }
 
-                ForEach(manager.boats) { boat in
+                ForEach(manager.boats.elements, id: \.key) { (_, boat) in
                     BoatView(boat: boat)
                         .offset(x: -50)
                         .offset(x: boat.coordinate.x, y: -boat.coordinate.y)

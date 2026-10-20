@@ -7,6 +7,7 @@
 
 import SwiftUI
 import CoreGraphics
+import Collections
 
 let activationTime: TimeInterval = 1 // takes 1s to build up fully
 let deactivationTime: TimeInterval = 0.5 // takes 0.5s to dissipate
@@ -21,7 +22,7 @@ class GameManager {
     let canvasWidth: CGFloat
     let monsterLocation: CGFloat // leftmost coordinate of the monster
 
-    var boats: [Boat]
+    var boats: OrderedDictionary<UUID, Boat>
 
     @ObservationIgnored internal var keyHeight: [String: CGFloat]
     @ObservationIgnored internal var prevTick: Date?
@@ -48,13 +49,9 @@ class GameManager {
                 .map { ($0, 0) }
         )
         self.keyLine = .init(start: .zero, segments: [])
-        self.boats = [
-            .init(
-                coordinate: .init(x: 0, y: 0),
-                angle: .zero,
-                velocity: 30 // 30 points per second
-            )
-        ]
+        self.boats = [:]
+
+        spawnNewBoat()
     }
 
     func update(forEvent event: KeyEventInfo) {

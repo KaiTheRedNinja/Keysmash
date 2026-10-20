@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		9372EE15308755A700ECF4E4 /* Collections in Frameworks */ = {isa = PBXBuildFile; productRef = 9372EE14308755A700ECF4E4 /* Collections */; };
 		93C0B93030866EDF002E593E /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 93C0B92F30866EDD002E593E /* README.md */; };
 /* End PBXBuildFile section */
 
@@ -27,6 +28,7 @@
 		000000000000000130000000 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				9372EE15308755A700ECF4E4 /* Collections in Frameworks */,
 			);
 		};
 /* End PBXFrameworksBuildPhase section */
@@ -66,6 +68,9 @@
 				000000000000000000000010 /* Keysmash */,
 			);
 			name = Keysmash;
+			packageProductDependencies = (
+				9372EE14308755A700ECF4E4 /* Collections */,
+			);
 			productName = MyApp;
 			productReference = 000000000000000000000120 /* Keysmash.app */;
 			productType = "com.apple.product-type.application";
@@ -94,6 +99,9 @@
 			);
 			mainGroup = 000000000000000000000001;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				9372EE13308755A700ECF4E4 /* XCRemoteSwiftPackageReference "swift-collections" */,
+			);
 			preferredProjectObjectVersion = 90;
 			productRefGroup = 000000000000000000000020 /* Products */;
 			projectDirPath = "";
@@ -350,6 +358,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		9372EE13308755A700ECF4E4 /* XCRemoteSwiftPackageReference "swift-collections" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-collections.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.7.3;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		9372EE14308755A700ECF4E4 /* Collections */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9372EE13308755A700ECF4E4 /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = Collections;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 000000000000000000000000 /* Project object */;
 }
