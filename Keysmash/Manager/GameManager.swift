@@ -23,6 +23,7 @@ class GameManager {
     let monsterLocation: CGFloat // leftmost coordinate of the monster
 
     var boats: OrderedDictionary<UUID, Boat>
+    var rocks: OrderedDictionary<UUID, Rock>
 
     @ObservationIgnored internal var keyHeight: [String: CGFloat]
     @ObservationIgnored internal var prevTick: Date?
@@ -50,8 +51,10 @@ class GameManager {
         )
         self.keyLine = .init(start: .zero, segments: [])
         self.boats = [:]
+        self.rocks = [:]
 
         spawnNewBoat()
+        spawnNewRock()
     }
 
     func update(forEvent event: KeyEventInfo) {

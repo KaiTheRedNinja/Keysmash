@@ -69,34 +69,46 @@ extension GameManager {
     private func calculateVelocities(dt: TimeInterval) {
         // calculate velocity of boat
         for (id, boat) in boats {
-            if let newBoat = update(boat: boat, dt: dt) {
+            if let newBoat = update(eatable: boat, dt: dt) {
                 boats[id] = newBoat
             } else {
                 boats.removeValue(forKey: id)
             }
         }
+        // calculate velocity of rocks
+        for (id, rock) in rocks {
+            if let newRock = update(eatable: rock, dt: dt) {
+                rocks[id] = newRock
+            } else {
+                rocks.removeValue(forKey: id)
+            }
+        }
+
+        // if we have run out of boats/rocks, spawn another one
+        if boats.isEmpty { spawnNewBoat() }
+        if rocks.isEmpty { spawnNewRock() }
     }
 
-    private func update(boat: Boat, dt: TimeInterval) -> Boat? {
-        var newBoat = boat
+    private func update<E: Eatable>(eatable: E, dt: TimeInterval) -> E? {
+        var newEatable = eatable
 
         // we only check the waves if the boat is alive
         let boatInBounds: Bool = keyLine.segments.last != nil
-            && keyLine.start.x <= newBoat.coordinate.x
-            && newBoat.coordinate.x < keyLine.segments.last!.end.x
+            && keyLine.start.x <= newEatable.coordinate.x
+            && newEatable.coordinate.x < keyLine.segments.last!.end.x
 
-        if boat.status == .alive {
+        if eatable.status == .alive {
             if boatInBounds {
                 for (candidateIndex, segment) in keyLine.segments.enumerated() {
                     let start = if candidateIndex == 0 { keyLine.start } else { keyLine.segments[candidateIndex-1].end }
-                    guard start.x <= newBoat.coordinate.x, newBoat.coordinate.x < segment.end.x else { continue }
+                    guard start.x <= newEatable.coordinate.x, newEatable.coordinate.x < segment.end.x else { continue }
 
                     let gradient = bezierGradient(
                         p0: start,
                         c1: segment.control1,
                         c2: segment.control2,
                         p1: segment.end,
-                        atX: newBoat.coordinate.x
+                        atX: newEatable.coordinate.x
                     ) ?? 0
 
                     let yValue = bezierY(
@@ -104,82 +116,87 @@ extension GameManager {
                         c1: segment.control1,
                         c2: segment.control2,
                         p1: segment.end,
-                        atX: newBoat.coordinate.x
+                        atX: newEatable.coordinate.x
                     ) ?? 0
 
-                    newBoat.angle = .radians(-atan(gradient))
-                    newBoat.velocity += newBoat.acceleration * sin(newBoat.angle.radians)
-                    newBoat.coordinate.y = yValue
+                    let angle = Angle.radians(-atan(gradient))
+                    if eatable.angleBehaviour == .followsWave {
+                        newEatable.angle = angle
+                    }
+                    newEatable.velocity += newEatable.acceleration * sin(angle.radians)
+                    newEatable.coordinate.y = yValue
 
                     break
                 }
             } else {
-                newBoat.coordinate.y = 0
-                newBoat.angle = .zero
+                newEatable.coordinate.y = 0
+                if eatable.angleBehaviour == .followsWave {
+                    newEatable.angle = .zero
+                }
             }
 
             // we only do drag when the boat is within bounds
             if boatInBounds {
-                let speedDecay = newBoat.drag * abs(newBoat.velocity)
-                let gravityDecay = max(0, newBoat.gravityLoss * (newBoat.coordinate.y - boat.coordinate.y))
+                let speedDecay = newEatable.drag * abs(newEatable.velocity)
+                let gravityDecay = max(0, newEatable.gravityLoss * (newEatable.coordinate.y - eatable.coordinate.y))
                 let totalDecay = speedDecay * dt + gravityDecay // gravity decay is already dY, which is a function of dT
-                if newBoat.velocity > 0 {
-                    newBoat.velocity = max(0, newBoat.velocity - totalDecay)
-                } else if newBoat.velocity < 0 {
-                    newBoat.velocity = min(0, newBoat.velocity + totalDecay)
+                if newEatable.velocity > 0 {
+                    newEatable.velocity = max(0, newEatable.velocity - totalDecay)
+                } else if newEatable.velocity < 0 {
+                    newEatable.velocity = min(0, newEatable.velocity + totalDecay)
                 }
             }
         }
 
-        newBoat.coordinate.x += newBoat.velocity * dt
+        newEatable.coordinate.x += newEatable.velocity * dt
+        if eatable.angleBehaviour == .followsVelocity {
+            newEatable.angle += .radians(newEatable.velocity / 50) * dt // angular velocity = v/L
+        }
 
         // determine the boat's status
         if boatInBounds {
             // if the boat's hitbox is inside the monster's mouth, it goes into the monster's mouth
-            if monsterLocation + segmentWidth < boat.coordinate.x, boat.coordinate.x < monsterLocation + monsterWidth - segmentWidth {
+            if monsterLocation + segmentWidth < eatable.coordinate.x, eatable.coordinate.x < monsterLocation + monsterWidth - segmentWidth {
                 // boat is inside monster's mouth
-                if newBoat.status != .eaten {
-                    newBoat.velocity = 0
+                if newEatable.status != .eaten {
+                    newEatable.velocity = 0
                 }
-                newBoat.status = .eaten
-                newBoat.coordinate.x = boat.coordinate.x // undo horizontal velocity
-                newBoat.velocity += 300 * dt
-                newBoat.coordinate.y -= newBoat.velocity * dt // boat sinks at 300 points/s^2
-                newBoat.angle += .degrees(360) * dt * (newBoat.coordinate.x < canvasWidth/2 ? 1 : -1) // and rotates at 1 rot/s
+                newEatable.status = .eaten
+                newEatable.coordinate.x = eatable.coordinate.x // undo horizontal velocity
+                newEatable.velocity += 300 * dt
+                newEatable.coordinate.y -= newEatable.velocity * dt // boat sinks at 300 points/s^2
+                newEatable.angle += .degrees(360) * dt * (newEatable.coordinate.x < canvasWidth/2 ? 1 : -1) // and rotates at 1 rot/s
 
                 // if the boat is under the sea, delete it
-                if newBoat.coordinate.y < -segmentSeaLevel {
-                    spawnNewBoat()
+                if newEatable.coordinate.y < -segmentSeaLevel {
                     return nil
                 }
             }
         } else {
             // check if the velocity is pointed outwards
-            if newBoat.coordinate.x < segmentWidth/2, newBoat.velocity <= 0 {
+            if newEatable.coordinate.x < segmentWidth/2, newEatable.velocity <= 0 {
                 // boat is to the left of the canvas
-                newBoat.status = .lost
+                newEatable.status = .lost
 
                 // speed up the boat to be 50 points per second
-                newBoat.velocity = -50
+                newEatable.velocity = -50
                 // if it is actually outside the bounds, just delete it
-                if boat.coordinate.x < -0.5 * (screenSize.width - canvasWidth) {
-                    spawnNewBoat()
+                if eatable.coordinate.x < -0.5 * (screenSize.width - canvasWidth) {
                     return nil
                 }
-            } else if newBoat.coordinate.x > canvasWidth - segmentWidth/2, newBoat.velocity >= 0 {
+            } else if newEatable.coordinate.x > canvasWidth - segmentWidth/2, newEatable.velocity >= 0 {
                 // boat is to the right of the canvas
 
                 // speed up the boat to be 50 points per second
-                newBoat.velocity = 50
+                newEatable.velocity = 50
                 // if it is actually outside the bounds, just delete it
-                if boat.coordinate.x > canvasWidth + 0.5 * (screenSize.width - canvasWidth) {
-                    spawnNewBoat()
+                if eatable.coordinate.x > canvasWidth + 0.5 * (screenSize.width - canvasWidth) {
                     return nil
                 }
             }
         }
 
-        return newBoat
+        return newEatable
     }
 
     func spawnNewBoat() {
@@ -196,5 +213,21 @@ extension GameManager {
         )
 
         boats[newBoat.id] = newBoat
+    }
+
+    func spawnNewRock() {
+        let fromLeft = Bool.random()
+        let startVelocity = CGFloat.random(in: 100..<200) * (fromLeft ? 1 : -1)
+        let startCoordinate = fromLeft
+        ? -0.5 * (screenSize.width - canvasWidth)
+        : canvasWidth + 0.5 * (screenSize.width - canvasWidth)
+
+        let newRock = Rock(
+            coordinate: .init(x: startCoordinate, y: 0),
+            angle: .zero,
+            velocity: startVelocity
+        )
+
+        rocks[newRock.id] = newRock
     }
 }
