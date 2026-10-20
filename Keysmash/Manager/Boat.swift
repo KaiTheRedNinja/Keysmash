@@ -17,8 +17,8 @@ struct Boat: Identifiable, Hashable {
     var velocity: CGFloat
     // The maximum acceleration of the boat, in point/s^2. Must be larger than decay.
     let acceleration: CGFloat = 15
-    // The speed decay of the boat, in point/s^2
-    let decay: CGFloat = 10
+    // The drag coefficient. a = vD, so v = v - vD * dt
+    let drag: CGFloat = 0.5
     // The gravity loss of the boat, in point/s per point
     let gravityLoss: CGFloat = 1 // lose 1 point/s per point of height gained
 }

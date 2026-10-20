@@ -17,43 +17,49 @@ struct GameView: View {
     var gameTimer = Timer.publish(every: 1/60, on: .main, in: .default).autoconnect()
 
     var body: some View {
-        HStack(alignment: .bottom, spacing: 0) {
-            ForEach(manager.keyLayout.enumerated(), id: \.offset) { (_, key) in
-                Text(key)
-                    .padding(.bottom, 5)
-                    .frame(
-                        width: segmentWidth,
-                        height: manager.keyHeight[key] ?? 0
-                    )
-            }
-        }
-        .frame(height: segmentRaisedHeight, alignment: .bottom)
-        .background {
-            Path { path in
-                path.move(to: manager.keyLine.start)
+        ZStack(alignment: .bottom) {
+            Spacer()
+                .frame(width: screenSize.width, height: screenSize.height, alignment: .center)
 
-                for segment in manager.keyLine.segments {
-                    path.addCurve(
-                        to: segment.end,
-                        control1: segment.control1,
-                        control2: segment.control2
-                    )
+            HStack(alignment: .bottom, spacing: 0) {
+                ForEach(manager.keyLayout.enumerated(), id: \.offset) { (_, key) in
+                    Text(key)
+                        .padding(.bottom, 5)
+                        .frame(
+                            width: segmentWidth,
+                            height: manager.keyHeight[key] ?? 0
+                        )
                 }
+            }
+            .background(alignment: .bottom) {
+                Path { path in
+                    path.move(to: manager.keyLine.start)
 
-                path.addLine(to: .init(x: manager.keyLine.segments.last?.end.x ?? 0, y: 0))
-                path.addLine(to: .init(x: 0, y: 0))
-                path.closeSubpath()
+                    for segment in manager.keyLine.segments {
+                        path.addCurve(
+                            to: segment.end,
+                            control1: segment.control1,
+                            control2: segment.control2
+                        )
+                    }
+
+                    path.addLine(to: .init(x: manager.keyLine.segments.last?.end.x ?? 0, y: 0))
+                    path.addLine(to: .init(x: 0, y: 0))
+                    path.closeSubpath()
+                }
+                .scale(x: 1, y: -1) // vertically flip
+                .fill(Color.blue.opacity(0.8))
+                .frame(height: segmentRaisedHeight, alignment: .bottom)
             }
-            .scale(x: 1, y: -1) // vertically flip
-            .fill(Color.blue.opacity(0.8))
-            .frame(height: segmentRaisedHeight, alignment: .bottom)
-        }
-        .overlay(alignment: .bottomLeading) {
-            ForEach(manager.boats) { boat in
-                BoatView(boat: boat)
-                    .offset(x: -50)
-                    .offset(x: boat.coordinate.x, y: -boat.coordinate.y)
+            .overlay(alignment: .bottomLeading) {
+                ForEach(manager.boats) { boat in
+                    BoatView(boat: boat)
+                        .offset(x: -50)
+                        .offset(x: boat.coordinate.x, y: -boat.coordinate.y)
+                }
             }
+            .border(Color.purple)
+            .padding(.bottom, 100)
         }
         .background {
             KeyCaptureView { event in

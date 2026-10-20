@@ -98,7 +98,7 @@ extension GameManager {
                 newBoat.angle = .zero
             }
 
-            let speedDecay = newBoat.decay
+            let speedDecay = newBoat.drag * abs(newBoat.velocity)
             let gravityDecay = max(0, newBoat.gravityLoss * (newBoat.coordinate.y - boat.coordinate.y))
             let totalDecay = speedDecay * dt + gravityDecay // gravity decay is already dY, which is a function of dT
             if newBoat.velocity > 0 {

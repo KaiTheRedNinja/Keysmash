@@ -14,6 +14,7 @@ struct ContentView: View {
                 GameView()
             }
             .frame(width: screenSize.width, height: screenSize.height, alignment: .center)
+            .border(Color.red)
             .scaleEffect(.init(width: scale, height: scale), anchor: .center)
             .frame(width: proxy.size.width, height: proxy.size.height)
         }
