@@ -67,6 +67,6 @@ struct Rock: Eatable {
 
     var angleBehaviour: AngleBehaviour { .followsVelocity }
     let acceleration: CGFloat = 15
-    let drag: CGFloat = 0.5
+    let drag: CGFloat = 0.1
     let gravityLoss: CGFloat = 1
 }

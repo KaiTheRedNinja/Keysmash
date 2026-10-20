@@ -17,6 +17,8 @@ let segmentSwell: CGFloat = 60
 let segmentSeaLevel: CGFloat = 300
 /// The total width of the monster
 let monsterWidth: CGFloat = 40 * 3
+/// The marign to the left and right of the monster where it wont count as its mouth hitbox
+let monsterMargin: CGFloat = 20
 
 /// The vertical misalignment of keys
 let keyVerticalMisalignment: CGFloat = 20
@@ -41,6 +43,20 @@ struct GameView: View {
                 .frame(height: segmentSeaLevel)
 
             ZStack(alignment: .bottomLeading) {
+                ForEach(manager.boats.elements, id: \.key) { (_, boat) in
+                    BoatView(boat: boat)
+                        .scaleEffect(.init(floatLiteral: 1 + min(0, boat.coordinate.y / segmentSeaLevel)))
+                        .offset(x: -50)
+                        .offset(x: boat.coordinate.x, y: -boat.coordinate.y)
+                }
+
+                ForEach(manager.rocks.elements, id: \.key) { (_, rock) in
+                    RockView(rock: rock)
+                        .scaleEffect(.init(floatLiteral: 1 + min(0, rock.coordinate.y / segmentSeaLevel)))
+                        .offset(x: -30, y: 20)
+                        .offset(x: rock.coordinate.x, y: -rock.coordinate.y)
+                }
+
                 Path { path in
                     path.move(to: manager.keyLine.start)
 
@@ -69,18 +85,6 @@ struct GameView: View {
                         )
                         .padding(.leading, (manager.keyLocations[key] ?? 0) - segmentWidth / 2)
                         .offset(y: segmentWidth - (manager.keyHeight[key] ?? 0) + CGFloat(yLevel[key] ?? 0) * keyVerticalMisalignment)
-                }
-
-                ForEach(manager.boats.elements, id: \.key) { (_, boat) in
-                    BoatView(boat: boat)
-                        .offset(x: -50)
-                        .offset(x: boat.coordinate.x, y: -boat.coordinate.y)
-                }
-
-                ForEach(manager.rocks.elements, id: \.key) { (_, rock) in
-                    RockView(rock: rock)
-                        .offset(x: -30, y: 20)
-                        .offset(x: rock.coordinate.x, y: -rock.coordinate.y)
                 }
 
                 MonsterView()

@@ -156,7 +156,8 @@ extension GameManager {
         // determine the boat's status
         if boatInBounds {
             // if the boat's hitbox is inside the monster's mouth, it goes into the monster's mouth
-            if monsterLocation + segmentWidth < eatable.coordinate.x, eatable.coordinate.x < monsterLocation + monsterWidth - segmentWidth {
+            if monsterLocation + monsterMargin < eatable.coordinate.x,
+               eatable.coordinate.x < monsterLocation + monsterWidth - monsterMargin {
                 // boat is inside monster's mouth
                 if newEatable.status != .eaten {
                     newEatable.velocity = 0
@@ -165,7 +166,9 @@ extension GameManager {
                 newEatable.coordinate.x = eatable.coordinate.x // undo horizontal velocity
                 newEatable.velocity += 300 * dt
                 newEatable.coordinate.y -= newEatable.velocity * dt // boat sinks at 300 points/s^2
-                newEatable.angle += .degrees(360) * dt * (newEatable.coordinate.x < canvasWidth/2 ? 1 : -1) // and rotates at 1 rot/s
+                if eatable.angleBehaviour == .followsWave {
+                    newEatable.angle += .degrees(360) * dt * (newEatable.coordinate.x < canvasWidth/2 ? 1 : -1) // and rotates at 1 rot/s
+                }
 
                 // if the boat is under the sea, delete it
                 if newEatable.coordinate.y < -segmentSeaLevel {
@@ -178,8 +181,8 @@ extension GameManager {
                 // boat is to the left of the canvas
                 newEatable.status = .lost
 
-                // speed up the boat to be 50 points per second
-                newEatable.velocity = -50
+                // speed up the boat to be at least 50 points per second
+                newEatable.velocity = min(newEatable.velocity, -50)
                 // if it is actually outside the bounds, just delete it
                 if eatable.coordinate.x < -0.5 * (screenSize.width - canvasWidth) {
                     return nil
@@ -187,8 +190,8 @@ extension GameManager {
             } else if newEatable.coordinate.x > canvasWidth - segmentWidth/2, newEatable.velocity >= 0 {
                 // boat is to the right of the canvas
 
-                // speed up the boat to be 50 points per second
-                newEatable.velocity = 50
+                // speed up the boat to be at least 50 points per second
+                newEatable.velocity = max(newEatable.velocity, 50)
                 // if it is actually outside the bounds, just delete it
                 if eatable.coordinate.x > canvasWidth + 0.5 * (screenSize.width - canvasWidth) {
                     return nil
