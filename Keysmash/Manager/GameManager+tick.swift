@@ -38,14 +38,19 @@ extension GameManager {
         // "blur" the key heights
         let blurRadius = 1 // 1 samples on either side
         keyHeight = [:]
-        for (index, key) in keyLayout.enumerated() {
-            let samples = ((-blurRadius + index)...(blurRadius + index)).compactMap { sampleIndex in
-                if 0 <= sampleIndex && sampleIndex < keyLayout.count {
-                    newKeyHeight[keyLayout[sampleIndex]] ?? 0
-                } else { nil }
+        func blur(layout: [String]) {
+            for (index, key) in layout.enumerated() {
+                let samples = ((-blurRadius + index)...(blurRadius + index)).compactMap { sampleIndex in
+                    if 0 <= sampleIndex && sampleIndex < layout.count {
+                        newKeyHeight[layout[sampleIndex]] ?? 0
+                    } else { nil }
+                }
+                keyHeight[key] = samples.reduce(0, +) / CGFloat(samples.count)
             }
-            keyHeight[key] = samples.reduce(0, +) / CGFloat(samples.count)
         }
+        // we blur the LHS and RHS of the monster seperately
+        blur(layout: Array(keyLayout[..<(keyLayout.count / 2)]))
+        blur(layout: Array(keyLayout[(keyLayout.count / 2)...]))
 
         // we have the bezier, but also add points for the canvas's and the monster's LHS and RHS.
         let points: [CGPoint] = [
