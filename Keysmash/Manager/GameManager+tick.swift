@@ -61,7 +61,7 @@ extension GameManager {
             var newBoat = boat
 
             // if the boat is within the wave area, update its velocity and angle accordingly
-            let index = Int((boat.coordinate.x + 0.5) / segmentWidth)
+            let index = Int(boat.coordinate.x / segmentWidth + 0.5)
             if 0 <= index, index <= keyLayout.count { // index is within the key layout
                 // 0 = to the left of the leftmost key
                 // keyLayout.count = to the right of the rightmost key
@@ -78,20 +78,17 @@ extension GameManager {
                     atX: newBoat.coordinate.x
                 )!
 
-                // get the heights for naive interpolation
-                let lhsHeight = if index > 0 {
-                    keyHeight[keyLayout[index-1]] ?? segmentDefaultHeight
-                } else { segmentDefaultHeight }
-                let rhsHeight = if index < keyLayout.count {
-                    keyHeight[keyLayout[index]] ?? segmentDefaultHeight
-                } else { segmentDefaultHeight }
-                let opp = rhsHeight - lhsHeight // height diff
+                let yValue = bezierY(
+                    p0: start,
+                    c1: bezier.control1,
+                    c2: bezier.control2,
+                    p1: bezier.end,
+                    atX: newBoat.coordinate.x
+                ) ?? segmentDefaultHeight
 
                 newBoat.angle = .radians(-atan(gradient))
-                newBoat.velocity -= newBoat.acceleration * opp / sqrt(segmentWidth*segmentWidth + opp*opp) // opp / hyp
-
-                let positionInIndex = (boat.coordinate.x + 0.5).remainder(dividingBy: segmentWidth) / segmentWidth
-                newBoat.coordinate.y = (lhsHeight * (1 - positionInIndex)) + (rhsHeight * positionInIndex)
+                newBoat.velocity += newBoat.acceleration * sin(newBoat.angle.radians)
+                newBoat.coordinate.y = yValue
             } else {
                 // collision detection - it went too far to either side, make it bounce with 50% decay in velocity and also return it
                 newBoat.velocity *= -0.5
@@ -101,11 +98,13 @@ extension GameManager {
                 newBoat.angle = .zero
             }
 
-            let decay = newBoat.decay + max(0, newBoat.gravityLoss * (newBoat.coordinate.y - boat.coordinate.y))
+            let speedDecay = newBoat.decay
+            let gravityDecay = max(0, newBoat.gravityLoss * (newBoat.coordinate.y - boat.coordinate.y))
+            let totalDecay = speedDecay * dt + gravityDecay // gravity decay is already dY, which is a function of dT
             if newBoat.velocity > 0 {
-                newBoat.velocity = max(0, newBoat.velocity - decay * dt)
+                newBoat.velocity = max(0, newBoat.velocity - totalDecay)
             } else if newBoat.velocity < 0 {
-                newBoat.velocity = min(0, newBoat.velocity + decay * dt)
+                newBoat.velocity = min(0, newBoat.velocity + totalDecay)
             }
 
             newBoat.coordinate.x += newBoat.velocity * dt

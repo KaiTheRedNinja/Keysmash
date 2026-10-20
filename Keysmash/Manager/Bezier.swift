@@ -103,3 +103,45 @@ func bezierGradient(
 
     return dy / dx
 }
+
+func bezierY(
+    p0: CGPoint,
+    c1: CGPoint,
+    c2: CGPoint,
+    p1: CGPoint,
+    atX targetX: CGFloat
+) -> CGFloat? {
+    // Ensure the target lies within this segment.
+    guard targetX >= p0.x, targetX <= p1.x else {
+        return nil
+    }
+
+    var low: CGFloat = 0
+    var high: CGFloat = 1
+
+    // Find t such that B(t).x == targetX.
+    for _ in 0..<40 {
+        let t = (low + high) / 2
+        let u = 1 - t
+
+        let x = u * u * u * p0.x
+        + 3 * u * u * t * c1.x
+        + 3 * u * t * t * c2.x
+        + t * t * t * p1.x
+
+        if x < targetX {
+            low = t
+        } else {
+            high = t
+        }
+    }
+
+    let t = (low + high) / 2
+    let u = 1 - t
+
+    // Evaluate B(t).y.
+    return u * u * u * p0.y
+    + 3 * u * u * t * c1.y
+    + 3 * u * t * t * c2.y
+    + t * t * t * p1.y
+}
