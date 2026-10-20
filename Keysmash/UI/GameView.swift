@@ -11,6 +11,7 @@ import Combine
 let segmentWidth: CGFloat = 40
 let segmentDefaultHeight: CGFloat = 60
 let segmentRaisedHeight: CGFloat = 120
+let monsterWidth: CGFloat = 40 * 3
 
 struct GameView: View {
     @State var manager: GameManager = .init()
@@ -21,7 +22,7 @@ struct GameView: View {
             Spacer()
                 .frame(width: screenSize.width, height: screenSize.height, alignment: .center)
 
-            HStack(alignment: .bottom, spacing: 0) {
+            ZStack(alignment: .bottomLeading) {
                 ForEach(manager.keyLayout.enumerated(), id: \.offset) { (_, key) in
                     Text(key)
                         .padding(.bottom, 5)
@@ -29,6 +30,7 @@ struct GameView: View {
                             width: segmentWidth,
                             height: manager.keyHeight[key] ?? 0
                         )
+                        .padding(.leading, (manager.keyLocations[key] ?? 0) - segmentWidth / 2)
                 }
             }
             .background(alignment: .bottom) {

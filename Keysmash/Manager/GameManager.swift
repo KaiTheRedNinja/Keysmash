@@ -14,8 +14,12 @@ let deactivationTime: TimeInterval = 0.5 // takes 0.5s to dissipate
 @Observable
 class GameManager {
     let keyLayout: [String]
+    let keyLocations: [String: CGFloat] // the center of the wave segment
     var currentlyPressedKeys: [String: KeyState]
     var keyLine: Bezier
+
+    let canvasWidth: CGFloat
+    let monsterLocation: CGFloat // leftmost coordinate of the monster
 
     var boats: [Boat]
 
@@ -25,6 +29,15 @@ class GameManager {
     init(keysStr: String = "qazwsxedcrfvtgbyhnujmik,ol.p;/") {
         self.keyLayout = keysStr.map { String($0).uppercased() }
         precondition(keyLayout.count == Set(keyLayout).count, "Keysstr must not contain duplicates")
+
+        let midpoint = keyLayout.count / 2
+        self.keyLocations = .init(
+            uniqueKeysWithValues: keyLayout.enumerated().map { (index, key) in
+                (key, segmentWidth * (CGFloat(index) + 0.5) + (index >= midpoint ? monsterWidth : 0))
+            }
+        )
+        self.canvasWidth = CGFloat(keyLayout.count) * segmentWidth + monsterWidth
+        self.monsterLocation = CGFloat(midpoint) * segmentWidth
 
         self.currentlyPressedKeys = .init(
             uniqueKeysWithValues: keyLayout

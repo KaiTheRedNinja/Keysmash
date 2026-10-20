@@ -47,12 +47,17 @@ extension GameManager {
             keyHeight[key] = samples.reduce(0, +) / CGFloat(samples.count)
         }
 
-        self.keyLine = .init(points: (
-            [CGPoint(x: 0, y: segmentDefaultHeight)] +
-            keyLayout.enumerated()
-                .map { (index, key) in CGPoint(x: segmentWidth * (CGFloat(index) + 0.5), y: keyHeight[key] ?? 0) } +
-            [CGPoint(x: segmentWidth * CGFloat(keyLayout.count), y: segmentDefaultHeight)]
-        )) ?? .init(start: .zero, segments: [])
+        // we have the bezier, but also add points for the canvas's and the monster's LHS and RHS.
+        let points: [CGPoint] = [
+            CGPoint(x: 0, y: segmentDefaultHeight), // leftmost point
+            CGPoint(x: monsterLocation + segmentWidth / 2, y: segmentDefaultHeight), // leftmost monster location
+            CGPoint(x: monsterLocation + monsterWidth - segmentWidth / 2, y: segmentDefaultHeight), // rightmost monster location
+            CGPoint(x: segmentWidth * CGFloat(keyLayout.count) + monsterWidth, y: segmentDefaultHeight) // rightmost point
+        ] + keyLayout.enumerated().map { (index, key) in CGPoint(x: keyLocations[key] ?? 0, y: keyHeight[key] ?? 0) } // beziers
+
+        self.keyLine = .init(
+            points: points.sorted(by: { $0.x < $1.x })
+        ) ?? .init(start: .zero, segments: [])
     }
 
     private func calculateVelocities(dt: TimeInterval) {
@@ -60,35 +65,31 @@ extension GameManager {
         for (arrayIndex, boat) in boats.enumerated() {
             var newBoat = boat
 
-            // if the boat is within the wave area, update its velocity and angle accordingly
-            let index = Int(boat.coordinate.x / segmentWidth + 0.5)
-            if 0 <= index, index <= keyLayout.count { // index is within the key layout
-                // 0 = to the left of the leftmost key
-                // keyLayout.count = to the right of the rightmost key
+            if let last = keyLine.segments.last, keyLine.start.x <= newBoat.coordinate.x, newBoat.coordinate.x < last.end.x {
+                for (candidateIndex, segment) in keyLine.segments.enumerated() {
+                    let start = if candidateIndex == 0 { keyLine.start } else { keyLine.segments[candidateIndex-1].end }
+                    guard start.x <= newBoat.coordinate.x, newBoat.coordinate.x < segment.end.x else { continue }
 
-                // get the bezier
-                let bezier = keyLine.segments[index]
-                let start = if index == 0 { keyLine.start } else { keyLine.segments[index-1].end }
+                    let gradient = bezierGradient(
+                        p0: start,
+                        c1: segment.control1,
+                        c2: segment.control2,
+                        p1: segment.end,
+                        atX: newBoat.coordinate.x
+                    )!
 
-                let gradient = bezierGradient(
-                    p0: start,
-                    c1: bezier.control1,
-                    c2: bezier.control2,
-                    p1: bezier.end,
-                    atX: newBoat.coordinate.x
-                )!
+                    let yValue = bezierY(
+                        p0: start,
+                        c1: segment.control1,
+                        c2: segment.control2,
+                        p1: segment.end,
+                        atX: newBoat.coordinate.x
+                    ) ?? segmentDefaultHeight
 
-                let yValue = bezierY(
-                    p0: start,
-                    c1: bezier.control1,
-                    c2: bezier.control2,
-                    p1: bezier.end,
-                    atX: newBoat.coordinate.x
-                ) ?? segmentDefaultHeight
-
-                newBoat.angle = .radians(-atan(gradient))
-                newBoat.velocity += newBoat.acceleration * sin(newBoat.angle.radians)
-                newBoat.coordinate.y = yValue
+                    newBoat.angle = .radians(-atan(gradient))
+                    newBoat.velocity += newBoat.acceleration * sin(newBoat.angle.radians)
+                    newBoat.coordinate.y = yValue
+                }
             } else {
                 // collision detection - it went too far to either side, make it bounce with 50% decay in velocity and also return it
                 newBoat.velocity *= -0.5
