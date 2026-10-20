@@ -91,8 +91,15 @@ struct GameView: View {
                     .padding(.bottom, -segmentSeaLevel)
                     .padding(.leading, manager.monsterLocation)
             }
-            .frame(width: manager.canvasWidth)
             .padding(.bottom, segmentSeaLevel)
+            .frame(width: manager.canvasWidth, height: screenSize.height, alignment: .bottom)
+            .overlay(alignment: .topTrailing) {
+                VStack(alignment: .trailing) {
+                    Text(String(repeating: "❤️", count: manager.lives))
+                    Text("\(manager.points)")
+                }
+                .font(.largeTitle)
+            }
         }
         .background {
             KeyCaptureView { event in

@@ -8,8 +8,8 @@ Keysmash is a game where you play as Charybdis, AKA the whirlpool monster. Your 
 - [x] Waves
   - [x] Respond to keystrokes
   - [x] Smooth (bezier?)
-  - [ ] Extend to fit the screen
-  - [ ] Letters vertically offset to their position on keyboards
+  - [x] Extend to fit the screen
+  - [x] Letters vertically offset to their position on keyboards
   - [ ] Gradient look
 - [x] Boats
   - [x] Starting velocity
@@ -17,14 +17,15 @@ Keysmash is a game where you play as Charybdis, AKA the whirlpool monster. Your 
   - [x] Acceleration due to waves
   - [x] Deceleration due to gravity
   - [x] Angle change due to waves
-- [ ] Rocks
-  - [ ] Everything that boats have
-  - [ ] Angle changes proportional to velocity rather than to acceleration
+- [x] Rocks
+  - [x] Everything that boats have
+  - [x] Angle changes proportional to velocity rather than to acceleration
 - [ ] Charybdis
-  - [ ] In the middle of the waves
-  - [ ] Eats boats
+  - [x] In the middle of the waves
+  - [x] Eats boats and rocks
   - [ ] Has tentacles going beneath the waves
 - [ ] Game loop
-  - [ ] Automatically spawn boats and rocks
-  - [ ] Keep track of points and lives
+  - [x] Automatically spawn boats and rocks
+    - [ ] Spawn more boats and rocks as time goes on
+  - [x] Keep track of points and lives
   - [ ] Death

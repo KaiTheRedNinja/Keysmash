@@ -25,6 +25,14 @@ class GameManager {
     var boats: OrderedDictionary<UUID, Boat>
     var rocks: OrderedDictionary<UUID, Rock>
 
+    /// The number of lives you have. You lose one every time you eat a rock.
+    var lives: Int = 3
+    /// The number of points you have. You gain
+    /// - +5 for each boat eaten
+    /// - +1 for each rock freed
+    /// - -3 for each boat freed
+    var points: Int = 0
+
     @ObservationIgnored internal var keyHeight: [String: CGFloat]
     @ObservationIgnored internal var prevTick: Date?
 

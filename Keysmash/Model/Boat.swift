@@ -27,6 +27,11 @@ protocol Eatable: Identifiable, Hashable {
     var drag: CGFloat { get }
     /// The gravity loss of the eatable, in point/s per point
     var gravityLoss: CGFloat { get }
+
+    /// What to do when this eatable is eaten
+    func onEat(manager: GameManager)
+    /// What to do when this eatable is lost
+    func onLost(manager: GameManager)
 }
 
 enum EatableStatus {
@@ -56,6 +61,14 @@ struct Boat: Eatable {
     let acceleration: CGFloat = 15
     let drag: CGFloat = 0.5
     let gravityLoss: CGFloat = 1 // lose 1 point/s per point of height gained
+
+    func onEat(manager: GameManager) {
+        manager.points += 5
+    }
+
+    func onLost(manager: GameManager) {
+        manager.points -= 3
+    }
 }
 
 struct Rock: Eatable {
@@ -69,4 +82,12 @@ struct Rock: Eatable {
     let acceleration: CGFloat = 15
     let drag: CGFloat = 0.1
     let gravityLoss: CGFloat = 1
+
+    func onEat(manager: GameManager) {
+        manager.lives -= 1
+    }
+
+    func onLost(manager: GameManager) {
+        manager.points += 1
+    }
 }

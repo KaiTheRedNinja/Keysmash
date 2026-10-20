@@ -161,6 +161,7 @@ extension GameManager {
                 // boat is inside monster's mouth
                 if newEatable.status != .eaten {
                     newEatable.velocity = 0
+                    newEatable.onEat(manager: self)
                 }
                 newEatable.status = .eaten
                 newEatable.coordinate.x = eatable.coordinate.x // undo horizontal velocity
@@ -178,6 +179,7 @@ extension GameManager {
         } else {
             // check if the velocity is pointed outwards
             if newEatable.coordinate.x < segmentWidth/2, newEatable.velocity <= 0 {
+                if newEatable.status != .lost { newEatable.onLost(manager: self) }
                 // boat is to the left of the canvas
                 newEatable.status = .lost
 
@@ -189,6 +191,8 @@ extension GameManager {
                 }
             } else if newEatable.coordinate.x > canvasWidth - segmentWidth/2, newEatable.velocity >= 0 {
                 // boat is to the right of the canvas
+                if newEatable.status != .lost { newEatable.onLost(manager: self) }
+                newEatable.status = .lost
 
                 // speed up the boat to be at least 50 points per second
                 newEatable.velocity = max(newEatable.velocity, 50)
