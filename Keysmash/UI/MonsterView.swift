@@ -18,40 +18,77 @@ struct TentacleView: View {
     var manager: GameManager
 
     var body: some View {
-        let height: CGFloat = 200
+        ZStack(alignment: .center) {
+            TentaclePair(manager: manager, height: 100, baseAngleRad: 10 * .pi / 180, fillStyle: Color.red)
+                .frame(width: manager.canvasWidth, height: 200)
+                .scaleEffect(0.8)
+            TentaclePair(manager: manager, height: 100, baseAngleRad: 6 * .pi / 180, fillStyle: Color.orange)
+                .frame(width: manager.canvasWidth, height: 200)
+                .scaleEffect(1.0)
+            TentaclePair(manager: manager, height: 100, baseAngleRad: 2 * .pi / 180, fillStyle: Color.yellow)
+                .frame(width: manager.canvasWidth, height: 200)
+                .scaleEffect(1.2)
+            TentaclePair(manager: manager, height: 100, baseAngleRad: -2 * .pi / 180, fillStyle: Color.green)
+                .frame(width: manager.canvasWidth, height: 200)
+                .scaleEffect(1.2)
+            TentaclePair(manager: manager, height: 100, baseAngleRad: -6 * .pi / 180, fillStyle: Color.purple)
+                .frame(width: manager.canvasWidth, height: 200)
+                .scaleEffect(1.0)
+        }
+        .frame(width: manager.canvasWidth, height: 200)
+    }
+}
+
+struct TentaclePair: View {
+    var manager: GameManager
+
+    var height: CGFloat
+    var baseAngleRad: CGFloat
+    var fillStyle: Color
+
+    var body: some View {
         let maxThickness: CGFloat = 30
-        let baseAngleRad: CGFloat = 5 * .pi / 180 // 5 deg
 
         Path { path in
             // we ditch the first and last as they are static
             guard manager.keyLine.segments.count > 2 else { return }
 
             let monsterMiddle = manager.monsterLocation + monsterWidth/2
-            let leftOrigin = CGPoint(x: 0, y: height/2)
-            let rightOrigin = CGPoint(x: manager.canvasWidth, y: height/2)
+            let monsterPoint = CGPoint(x: monsterMiddle, y: height)
+            let leftOrigin = CGPoint(x: 0, y: height)
+            let rightOrigin = CGPoint(x: manager.canvasWidth, y: height)
             let angleShiftRad = atan((maxThickness/2)/monsterMiddle) // opp / adj
 
             func noise(x: CGFloat) -> CGFloat {
                 0.25 * maxThickness * sin(
-                    x / 40 // sine moves along length
+                    baseAngleRad * 100 // randomish offset
+                    + x / 40 // sine moves along length
                     + (x > monsterMiddle ? -1 : 1)          // invert direction of travel depending on side. Always travels outwards.
                     * Date.timeIntervalSinceReferenceDate   // sine travels with time
                 )
             }
 
             func rot(_ point: CGPoint, up: Bool) -> CGPoint {
-                let newPoint = if point.x < monsterMiddle {
-                    rotate(.init(x: point.x, y: 0), around: leftOrigin, radians: angleShiftRad * (up ? 1 : -1) - baseAngleRad)
+                // rotate around edge origins to give thickness
+                let stageA = if point.x < monsterMiddle {
+                    rotate(.init(x: point.x, y: 0), around: leftOrigin, radians: angleShiftRad * (up ? 1 : -1))
                 } else {
-                    rotate(.init(x: point.x, y: 0), around: rightOrigin, radians: angleShiftRad * (up ? -1 : 1) + baseAngleRad)
+                    rotate(.init(x: point.x, y: 0), around: rightOrigin, radians: angleShiftRad * (up ? -1 : 1))
+                }
+
+                // rotate around center to give base angle
+                let stageB = if point.x < monsterMiddle {
+                    rotate(.init(x: stageA.x, y: stageA.y), around: monsterPoint, radians: -baseAngleRad)
+                } else {
+                    rotate(.init(x: stageA.x, y: stageA.y), around: monsterPoint, radians: baseAngleRad)
                 }
 
                 return .init(
                     x: point.x,
                     y: height / 2 // center line
-                        - point.y // original height
-                        - newPoint.y // rotated change in height
-                        + noise(x: point.x) // wavy tentacle
+                    - point.y // original height
+                    - stageB.y // rotated change in height
+                    + noise(x: point.x) // wavy tentacle
                 )
             }
 
@@ -79,7 +116,7 @@ struct TentacleView: View {
 
             path.closeSubpath()
         }
-        .fill(Color.red)
+        .fill(fillStyle)
         .frame(width: manager.canvasWidth, height: maxThickness)
     }
 }

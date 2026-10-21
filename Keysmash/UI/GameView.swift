@@ -14,7 +14,7 @@ let segmentWidth: CGFloat = 40
 /// The maximum height a wave can be, relative to sea level
 let segmentSwell: CGFloat = 60
 /// The sea level of the wave, relative to the bottom of the canvas
-let segmentSeaLevel: CGFloat = 300
+let segmentSeaLevel: CGFloat = 200
 /// The total width of the monster
 let monsterWidth: CGFloat = 40 * 3
 /// The marign to the left and right of the monster where it wont count as its mouth hitbox
@@ -91,16 +91,17 @@ struct GameView: View {
                         .padding(.leading, (manager.keyLocations[key] ?? 0) - segmentWidth / 2)
                         .offset(y: segmentWidth - (manager.keyHeight[key] ?? 0) + CGFloat(yLevel[key] ?? 0) * keyVerticalMisalignment)
                 }
-
-                MonsterView()
-                    .padding(.bottom, -segmentSeaLevel)
-                    .padding(.leading, manager.monsterLocation)
             }
             .padding(.bottom, segmentSeaLevel)
             .frame(width: manager.canvasWidth, height: screenSize.height, alignment: .bottom)
-            .overlay(alignment: .bottom) {
-                TentacleView(manager: manager)
-                    .frame(height: segmentSeaLevel, alignment: .topLeading)
+            .overlay(alignment: .bottomLeading) {
+                ZStack(alignment: .topLeading) {
+                    TentacleView(manager: manager)
+                        .frame(height: segmentSeaLevel, alignment: .topLeading)
+                    MonsterView()
+                        .padding(.leading, manager.monsterLocation)
+                }
+                .frame(height: segmentSeaLevel, alignment: .topLeading)
             }
             .overlay(alignment: .topTrailing) {
                 VStack(alignment: .trailing) {
