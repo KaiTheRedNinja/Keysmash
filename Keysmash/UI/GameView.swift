@@ -98,6 +98,10 @@ struct GameView: View {
             }
             .padding(.bottom, segmentSeaLevel)
             .frame(width: manager.canvasWidth, height: screenSize.height, alignment: .bottom)
+            .overlay(alignment: .bottom) {
+                TentacleView(manager: manager)
+                    .frame(height: segmentSeaLevel, alignment: .topLeading)
+            }
             .overlay(alignment: .topTrailing) {
                 VStack(alignment: .trailing) {
                     Text(String(repeating: "❤️", count: manager.lives))
