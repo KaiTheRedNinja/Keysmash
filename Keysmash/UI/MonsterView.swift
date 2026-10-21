@@ -13,6 +13,8 @@ struct MonsterView: View {
 
     @State var offset: TimeInterval = 0
 
+    var frontOnly: Bool = false
+
     var body: some View {
         ZStack(alignment: .top) {
             Color.white.opacity(0.01)
@@ -20,21 +22,34 @@ struct MonsterView: View {
             let total: Int = 15
 
             // main body
-            ForEach(0..<(total+1), id: \.self) { index in
-                let percentage = 1 - CGFloat(index)/CGFloat(total)
-                let scale = 1.0 + percentage*percentage*percentage * 4
+            ZStack(alignment: .top) {
+                ForEach(0..<(total+1), id: \.self) { index in
+                    let percentage = 1 - CGFloat(index)/CGFloat(total)
+                    let scale = 1.0 + percentage*percentage*percentage * 4
 
-                ZStack {
-                    Ellipse()
-                        .fill(Color(hue: percentage, saturation: 0.8, brightness: 1.0))
-                    Ellipse()
-                        .stroke(Color(hue: percentage, saturation: 0.8, brightness: 0.7), lineWidth: 1)
+                    ZStack {
+                        Ellipse()
+                            .fill(Color(hue: percentage, saturation: 0.8, brightness: 1.0))
+                        Ellipse()
+                            .stroke(Color(hue: percentage, saturation: 0.8, brightness: 0.7), lineWidth: 1)
+                    }
+                    .frame(width: scale * monsterWidth, height: scale * monsterWidth/3)
+                    .offset(
+                        y: -monsterWidth/3/2 + percentage * segmentSeaLevel + 5 * sin(2 * (5 * percentage - offset))
+                    )
                 }
-                .frame(width: scale * monsterWidth, height: scale * monsterWidth/3)
-                .offset(
-                    y: -monsterWidth/3/2 + percentage * segmentSeaLevel + 5 * sin(2 * (5 * percentage - offset))
-                )
             }
+            .padding(.horizontal, monsterWidth * 5)
+            .reverseMask(alignment: .top) {
+                if frontOnly {
+                    Ellipse()
+                        .frame(width: monsterWidth, height: monsterWidth/3)
+                        .offset(
+                            y: -monsterWidth/3/2 + 5 * sin(-2 * offset)
+                        )
+                }
+            }
+            .padding(.horizontal, -monsterWidth * 5)
 
             // throat
             ForEach(0..<5, id: \.self) { index in
@@ -52,11 +67,13 @@ struct MonsterView: View {
                 )
             }
             .mask {
-                Ellipse()
-                    .frame(width: monsterWidth, height: monsterWidth/3)
-                    .offset(
-                        y: -monsterWidth/3/2 + 5 * sin(-2 * offset)
-                    )
+                if !frontOnly {
+                    Ellipse()
+                        .frame(width: monsterWidth, height: monsterWidth/3)
+                        .offset(
+                            y: -monsterWidth/3/2 + 5 * sin(-2 * offset)
+                        )
+                }
             }
 
             // teeth, which are positioned on top of the ellipse
@@ -85,7 +102,13 @@ struct MonsterView: View {
                     .rotationEffect(.degrees(360) * percentage + .degrees(offset * 10))
                 }
             }
-            .frame(height: monsterWidth/3)
+            .frame(width: monsterWidth, height: monsterWidth/3)
+            .reverseMask(alignment: .top) {
+                if frontOnly {
+                    Rectangle()
+                        .frame(width: monsterWidth, height: monsterWidth/3/2)
+                }
+            }
             .scaleEffect(x: 3, y: 1)
             .offset(
                 y: -monsterWidth/3/2 + 5 * sin(-2 * offset)
@@ -228,4 +251,20 @@ func rotate(
             .border(Color.red, width: 1)
     }
     .padding(50)
+}
+
+extension View {
+    @inlinable
+    public func reverseMask<Mask: View>(
+        alignment: Alignment = .center,
+        @ViewBuilder _ mask: () -> Mask
+    ) -> some View {
+        self.mask {
+            Rectangle()
+                .overlay(alignment: alignment) {
+                    mask()
+                        .blendMode(.destinationOut)
+                }
+        }
+    }
 }

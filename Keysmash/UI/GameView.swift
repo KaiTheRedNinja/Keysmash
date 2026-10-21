@@ -43,6 +43,12 @@ struct GameView: View {
                 .frame(height: segmentSeaLevel)
 
             ZStack(alignment: .bottomLeading) {
+                // back of monster's throat
+                MonsterView(gameTimer: gameTimer, frontOnly: false)
+                    .padding(.leading, manager.monsterLocation)
+                    .frame(height: segmentSeaLevel, alignment: .topLeading)
+                    .padding(.bottom, -segmentSeaLevel)
+
                 ForEach(manager.boats.elements, id: \.key) { (_, boat) in
                     BoatView(boat: boat)
                         .scaleEffect(.init(floatLiteral: 1 + min(0, boat.coordinate.y / segmentSeaLevel)))
@@ -57,9 +63,8 @@ struct GameView: View {
                         .offset(x: rock.coordinate.x, y: -rock.coordinate.y)
                 }
 
+                let canvasMargin = (screenSize.width - manager.canvasWidth)/2
                 Path { path in
-                    let canvasMargin = (screenSize.width - manager.canvasWidth)/2
-
                     path.move(to: .init(x: -canvasMargin, y: 0))
 
                     path.addLine(to: manager.keyLine.start)
@@ -80,6 +85,15 @@ struct GameView: View {
                 .scale(x: 1, y: -1) // vertically flip
                 .fill(Color.blue.opacity(0.7))
                 .frame(height: segmentSwell, alignment: .bottom)
+                .padding(.bottom, segmentSeaLevel)
+                .padding(.horizontal, canvasMargin)
+                .reverseMask(alignment: .leading) {
+                    Rectangle()
+                        .frame(width: monsterWidth, height: segmentSwell + segmentSeaLevel)
+                        .padding(.leading, manager.monsterLocation + canvasMargin)
+                }
+                .padding(.bottom, -segmentSeaLevel)
+                .padding(.horizontal, -canvasMargin)
 
                 ForEach(manager.keyLayout.enumerated(), id: \.offset) { (_, key) in
                     Text(key)
@@ -98,7 +112,7 @@ struct GameView: View {
                 ZStack(alignment: .topLeading) {
                     TentacleView(manager: manager)
                         .frame(height: segmentSeaLevel, alignment: .topLeading)
-                    MonsterView(gameTimer: gameTimer)
+                    MonsterView(gameTimer: gameTimer, frontOnly: true)
                         .padding(.leading, manager.monsterLocation)
                 }
                 .frame(height: segmentSeaLevel, alignment: .topLeading)
