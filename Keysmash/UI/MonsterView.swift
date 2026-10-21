@@ -6,11 +6,39 @@
 //
 
 import SwiftUI
+import Combine
 
 struct MonsterView: View {
+    var gameTimer = Timer.publish(every: 1/60, on: .main, in: .default).autoconnect()
+
+    @State var offset: TimeInterval = 0
+
     var body: some View {
-        Rectangle()
-            .frame(width: monsterWidth, height: segmentSeaLevel)
+        ZStack(alignment: .top) {
+            Color.white.opacity(0.01)
+
+            let total: Int = 15
+
+            ForEach(0..<total, id: \.self) { index in
+                let percentage = 1 - CGFloat(index)/CGFloat(total)
+                let scale = 1.0 + percentage*percentage*percentage * 4
+
+                ZStack {
+                    Ellipse()
+                        .fill(Color(hue: percentage, saturation: 0.8, brightness: 0.9))
+                    Ellipse()
+                        .stroke(Color(hue: percentage, saturation: 0.8, brightness: 0.7), lineWidth: 1)
+                }
+                .frame(width: scale * monsterWidth, height: scale * monsterWidth/3)
+                .offset(
+                    y: -monsterWidth/3/2 + percentage * segmentSeaLevel + 5 * sin(2 * (5 * percentage - offset))
+                )
+            }
+        }
+        .frame(width: monsterWidth, height: segmentSeaLevel)
+        .onReceive(gameTimer) { _ in
+            self.offset = Date.timeIntervalSinceReferenceDate
+        }
     }
 }
 

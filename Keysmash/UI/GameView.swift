@@ -98,7 +98,7 @@ struct GameView: View {
                 ZStack(alignment: .topLeading) {
                     TentacleView(manager: manager)
                         .frame(height: segmentSeaLevel, alignment: .topLeading)
-                    MonsterView()
+                    MonsterView(gameTimer: gameTimer)
                         .padding(.leading, manager.monsterLocation)
                 }
                 .frame(height: segmentSeaLevel, alignment: .topLeading)
