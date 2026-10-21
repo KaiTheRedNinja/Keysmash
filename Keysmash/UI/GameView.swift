@@ -117,9 +117,3 @@ struct GameView: View {
     }
 }
 
-struct MonsterView: View {
-    var body: some View {
-        Rectangle()
-            .frame(width: monsterWidth, height: segmentSeaLevel)
-    }
-}
