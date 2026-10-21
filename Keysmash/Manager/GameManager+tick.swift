@@ -232,7 +232,8 @@ extension GameManager {
         let newRock = Rock(
             coordinate: .init(x: startCoordinate, y: 0),
             angle: .zero,
-            velocity: startVelocity
+            velocity: startVelocity,
+            sideCount: .random(in: 6...12)
         )
 
         rocks[newRock.id] = newRock

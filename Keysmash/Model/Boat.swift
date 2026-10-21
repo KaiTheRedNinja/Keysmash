@@ -78,6 +78,8 @@ struct Rock: Eatable {
     var velocity: CGFloat
     var status: EatableStatus = .alive
 
+    var sideCount: Int
+
     var angleBehaviour: AngleBehaviour { .followsVelocity }
     let acceleration: CGFloat = 15
     let drag: CGFloat = 0.1
