@@ -32,6 +32,8 @@ class GameManager {
     /// - +1 for each rock freed
     /// - -3 for each boat freed
     var points: Int = 0
+    /// Whether the monster is currently eating
+    var isEating: Bool = false
 
     @ObservationIgnored internal var keyHeight: [String: CGFloat]
     @ObservationIgnored internal var prevTick: Date?

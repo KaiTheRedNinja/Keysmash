@@ -10,6 +10,7 @@ import Combine
 
 struct MonsterView: View {
     var gameTimer = Timer.publish(every: 1/60, on: .main, in: .default).autoconnect()
+    var isEating: Bool = false
 
     @State var offset: TimeInterval = 0
 
@@ -82,10 +83,11 @@ struct MonsterView: View {
             ZStack {
                 ForEach(0..<teeth, id: \.self) { index in
                     let percentage = CGFloat(index)/CGFloat(teeth)
+                    let toothHeight = isEating ? monsterWidth/6 : monsterWidth/3 * toothSize
 
                     VStack(spacing: 0) {
                         Spacer()
-                            .frame(height: monsterWidth/3 * (1 - toothSize))
+                            .frame(height: monsterWidth/3 - toothHeight)
                         ZStack(alignment: .top) {
                             Star(corners: 3, smoothness: 0.5)
                                 .fill(Color.white)
@@ -96,9 +98,13 @@ struct MonsterView: View {
                         .mask {
                             Star(corners: 3, smoothness: 0.5)
                         }
-                        .frame(width: monsterWidth * 1.2 / CGFloat(teeth), height: monsterWidth/3 * toothSize)
-                        .scaleEffect(y: 1 + 0.2 * sin(8 * (5 * percentage - offset)), anchor: .bottom)
+                        .frame(width: monsterWidth * 1.2 / CGFloat(teeth), height: toothHeight)
+                        .scaleEffect(
+                            y: 1 + 0.2 * sin(8 * (5 * percentage - offset)),
+                            anchor: .bottom
+                        )
                     }
+                    .animation(.easeIn(duration: 0.1), value: isEating)
                     .rotationEffect(.degrees(360) * percentage + .degrees(offset * 10))
                 }
             }

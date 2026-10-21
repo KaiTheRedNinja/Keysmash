@@ -19,6 +19,8 @@ extension GameManager {
         let dt = date.timeIntervalSince(prevTick)
 
         calculateVelocities(dt: dt)
+
+        isEating = boats.values.contains(where: { $0.status == .eaten }) || rocks.values.contains(where: { $0.status == .eaten })
     }
 
     private func calculateHeights(date: Date) {

@@ -44,7 +44,7 @@ struct GameView: View {
 
             ZStack(alignment: .bottomLeading) {
                 // back of monster's throat
-                MonsterView(gameTimer: gameTimer, frontOnly: false)
+                MonsterView(gameTimer: gameTimer, isEating: manager.isEating, frontOnly: false)
                     .padding(.leading, manager.monsterLocation)
                     .frame(height: segmentSeaLevel, alignment: .topLeading)
                     .padding(.bottom, -segmentSeaLevel)
@@ -112,7 +112,7 @@ struct GameView: View {
                 ZStack(alignment: .topLeading) {
                     TentacleView(manager: manager)
                         .frame(height: segmentSeaLevel, alignment: .topLeading)
-                    MonsterView(gameTimer: gameTimer, frontOnly: true)
+                    MonsterView(gameTimer: gameTimer, isEating: manager.isEating, frontOnly: true)
                         .padding(.leading, manager.monsterLocation)
                 }
                 .frame(height: segmentSeaLevel, alignment: .topLeading)
