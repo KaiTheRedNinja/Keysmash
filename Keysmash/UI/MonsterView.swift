@@ -19,13 +19,14 @@ struct MonsterView: View {
 
             let total: Int = 15
 
-            ForEach(0..<total, id: \.self) { index in
+            // main body
+            ForEach(0..<(total+1), id: \.self) { index in
                 let percentage = 1 - CGFloat(index)/CGFloat(total)
                 let scale = 1.0 + percentage*percentage*percentage * 4
 
                 ZStack {
                     Ellipse()
-                        .fill(Color(hue: percentage, saturation: 0.8, brightness: 0.9))
+                        .fill(Color(hue: percentage, saturation: 0.8, brightness: 1.0))
                     Ellipse()
                         .stroke(Color(hue: percentage, saturation: 0.8, brightness: 0.7), lineWidth: 1)
                 }
@@ -34,6 +35,61 @@ struct MonsterView: View {
                     y: -monsterWidth/3/2 + percentage * segmentSeaLevel + 5 * sin(2 * (5 * percentage - offset))
                 )
             }
+
+            // throat
+            ForEach(0..<5, id: \.self) { index in
+                let percentage = CGFloat(index)/CGFloat(total)
+
+                ZStack {
+                    Ellipse()
+                        .fill(Color(hue: percentage, saturation: 0.8, brightness: 0.4))
+                    Ellipse()
+                        .stroke(Color(hue: percentage, saturation: 0.8, brightness: 0.2), lineWidth: 1)
+                }
+                .frame(width: monsterWidth, height: monsterWidth/3)
+                .offset(
+                    y: -monsterWidth/3/2 + percentage * segmentSeaLevel + 5 * sin(2 * (5 * percentage - offset))
+                )
+            }
+            .mask {
+                Ellipse()
+                    .frame(width: monsterWidth, height: monsterWidth/3)
+                    .offset(
+                        y: -monsterWidth/3/2 + 5 * sin(-2 * offset)
+                    )
+            }
+
+            // teeth, which are positioned on top of the ellipse
+            let teeth: Int = 20
+            let toothSize: CGFloat = 1/5
+            ZStack {
+                ForEach(0..<teeth, id: \.self) { index in
+                    let percentage = CGFloat(index)/CGFloat(teeth)
+
+                    VStack(spacing: 0) {
+                        Spacer()
+                            .frame(height: monsterWidth/3 * (1 - toothSize))
+                        ZStack(alignment: .top) {
+                            Star(corners: 3, smoothness: 0.5)
+                                .fill(Color.white)
+                            Star(corners: 6, smoothness: 0.5)
+                                .fill(Color(hue: percentage, saturation: 0.8, brightness: 0.2))
+                                .scaleEffect(0.5, anchor: .top)
+                        }
+                        .mask {
+                            Star(corners: 3, smoothness: 0.5)
+                        }
+                        .frame(width: monsterWidth * 1.2 / CGFloat(teeth), height: monsterWidth/3 * toothSize)
+                        .scaleEffect(y: 1 + 0.2 * sin(8 * (5 * percentage - offset)), anchor: .bottom)
+                    }
+                    .rotationEffect(.degrees(360) * percentage + .degrees(offset * 10))
+                }
+            }
+            .frame(height: monsterWidth/3)
+            .scaleEffect(x: 3, y: 1)
+            .offset(
+                y: -monsterWidth/3/2 + 5 * sin(-2 * offset)
+            )
         }
         .frame(width: monsterWidth, height: segmentSeaLevel)
         .onReceive(gameTimer) { _ in
