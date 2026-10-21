@@ -58,7 +58,11 @@ struct GameView: View {
                 }
 
                 Path { path in
-                    path.move(to: manager.keyLine.start)
+                    let canvasMargin = (screenSize.width - manager.canvasWidth)/2
+
+                    path.move(to: .init(x: -canvasMargin, y: 0))
+
+                    path.addLine(to: manager.keyLine.start)
 
                     for segment in manager.keyLine.segments {
                         path.addCurve(
@@ -68,12 +72,13 @@ struct GameView: View {
                         )
                     }
 
-                    path.addLine(to: .init(x: manager.keyLine.segments.last?.end.x ?? 0, y: -segmentSeaLevel))
-                    path.addLine(to: .init(x: 0, y: -segmentSeaLevel))
+                    path.addLine(to: .init(x: canvasMargin + (manager.keyLine.segments.last?.end.x ?? 0), y: 0))
+                    path.addLine(to: .init(x: canvasMargin + (manager.keyLine.segments.last?.end.x ?? 0), y: -segmentSeaLevel))
+                    path.addLine(to: .init(x: -canvasMargin, y: -segmentSeaLevel))
                     path.closeSubpath()
                 }
                 .scale(x: 1, y: -1) // vertically flip
-                .fill(Color.blue.opacity(0.8))
+                .fill(Color.blue.opacity(0.7))
                 .frame(height: segmentSwell, alignment: .bottom)
 
                 ForEach(manager.keyLayout.enumerated(), id: \.offset) { (_, key) in
