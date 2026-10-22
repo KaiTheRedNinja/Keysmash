@@ -87,8 +87,7 @@ extension GameManager {
         }
 
         // if we have run out of boats/rocks, spawn another one
-        if boats.isEmpty { spawnNewBoat() }
-        if rocks.isEmpty { spawnNewRock() }
+        checkEatableCount()
     }
 
     private func update<E: Eatable>(eatable: E, dt: TimeInterval) -> E? {
@@ -206,6 +205,21 @@ extension GameManager {
         }
 
         return newEatable
+    }
+
+    func checkEatableCount() {
+        let totalEatables = boats.count + rocks.count
+        let shortfall = concurrentEatables - totalEatables
+        guard shortfall > 0 else { return }
+
+        for _ in 0..<shortfall {
+            // spawn either a boat or rock to satisfy the shortfall
+            if Bool.random() {
+                spawnNewBoat()
+            } else {
+                spawnNewRock()
+            }
+        }
     }
 
     func spawnNewBoat() {

@@ -35,6 +35,20 @@ class GameManager {
     /// Whether the monster is currently eating
     var isEating: Bool = false
 
+    /// The number of boats and rocks on screen at any given point.
+    /// If the total number of boats and rocks is lower than this number, one is
+    /// created at random.
+    ///
+    /// It is determined by the formula `1 + sqrt(points / 5)`. This starts at 1, and increases to:
+    /// - 2 at 5 points
+    /// - 3 at 20 points
+    /// - 4 at 45 points
+    /// - 5 at 80 points
+    /// - N at `5(N-1)^2` points
+    var concurrentEatables: Int {
+        1 + Int(sqrt(CGFloat(points) / 5))
+    }
+
     @ObservationIgnored internal var keyHeight: [String: CGFloat]
     @ObservationIgnored internal var prevTick: Date?
 
@@ -63,8 +77,7 @@ class GameManager {
         self.boats = [:]
         self.rocks = [:]
 
-        spawnNewBoat()
-        spawnNewRock()
+        checkEatableCount()
     }
 
     func update(forEvent event: KeyEventInfo) {
