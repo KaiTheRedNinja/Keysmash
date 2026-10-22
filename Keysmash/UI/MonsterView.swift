@@ -27,6 +27,9 @@ struct MonsterView: View {
                 ForEach(0..<(total+1), id: \.self) { index in
                     let percentage = 1 - CGFloat(index)/CGFloat(total)
                     let scale = 1.0 + percentage*percentage*percentage * 4
+                    let movement = sin(2 * (5 * percentage - offset))
+
+                    let horizontalScale = index == total ? 1 : 1 + 0.1 * movement
 
                     ZStack {
                         Ellipse()
@@ -34,9 +37,9 @@ struct MonsterView: View {
                         Ellipse()
                             .stroke(Color(hue: percentage, saturation: 0.8, brightness: 0.7), lineWidth: 1)
                     }
-                    .frame(width: scale * monsterWidth, height: scale * monsterWidth/3)
+                    .frame(width: scale * monsterWidth * horizontalScale, height: scale * monsterWidth/3)
                     .offset(
-                        y: -monsterWidth/3/2 + percentage * segmentSeaLevel + 5 * sin(2 * (5 * percentage - offset))
+                        y: -monsterWidth/3/2 + percentage * segmentSeaLevel + 5 * movement
                     )
                 }
             }
