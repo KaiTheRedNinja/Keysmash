@@ -20,12 +20,12 @@ Keysmash is a game where you play as Charybdis, AKA the whirlpool monster. Your 
 - [x] Rocks
   - [x] Everything that boats have
   - [x] Angle changes proportional to velocity rather than to acceleration
-- [ ] Charybdis
+- [x] Charybdis
   - [x] In the middle of the waves
   - [x] Eats boats and rocks
-  - [ ] Has tentacles going beneath the waves
+  - [x] Has tentacles going beneath the waves
 - [ ] Game loop
   - [x] Automatically spawn boats and rocks
-    - [ ] Spawn more boats and rocks as time goes on
+    - [x] Spawn more boats and rocks as time goes on
   - [x] Keep track of points and lives
   - [ ] Death

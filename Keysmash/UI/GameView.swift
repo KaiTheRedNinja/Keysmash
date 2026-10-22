@@ -27,6 +27,8 @@ struct GameView: View {
     @State var manager: GameManager = .init()
     var gameTimer = Timer.publish(every: 1/60, on: .main, in: .default).autoconnect()
 
+    @State var currentOffset: TimeInterval = 0
+
     var yLevel: [String: Int] = .init(
         "QWERTYUIOP[]\\".map { (String($0), 0) } +
         "ASDFGHJKL;'".map { (String($0), 1) } +
@@ -41,6 +43,33 @@ struct GameView: View {
 
             Color.blue
                 .frame(height: segmentSeaLevel)
+
+            // passive swell
+            ForEach(3..<5) { multiple in
+                let scale = CGFloat(multiple)
+
+                Path { path in
+                    let passiveSwell: CGFloat = 5
+                    let sampleCount = 100
+
+                    path.move(to: .init(x: 0, y: 0))
+                    for sampleIndex in 0...sampleCount {
+                        let percent = CGFloat(sampleIndex)/CGFloat(sampleCount)
+                        let height = passiveSwell * sin(scale * (
+                            0.5 * CGFloat(sampleIndex) +
+                            (percent > 0.5 ? 1 : -1) * 2 * currentOffset
+                        ))
+                        path.addLine(to: .init(x: screenSize.width * percent, y: height - passiveSwell))
+                    }
+                    path.addLine(to: .init(x: screenSize.width, y: 0))
+                    path.addLine(to: .init(x: screenSize.width, y: segmentSeaLevel))
+                    path.addLine(to: .init(x: 0, y: segmentSeaLevel))
+                    path.addLine(to: .init(x: 0, y: 0))
+                    path.closeSubpath()
+                }
+                .fill(Color.blue.opacity(0.8))
+                .frame(height: segmentSeaLevel)
+            }
 
             ZStack(alignment: .bottomLeading) {
                 // back of monster's throat
@@ -132,6 +161,7 @@ struct GameView: View {
         }
         .onReceive(gameTimer) { date in
             manager.tick(date: date)
+            currentOffset = Date.timeIntervalSinceReferenceDate
         }
     }
 }
