@@ -208,6 +208,47 @@ extension GameManager {
     }
 
     func checkEatableCount() {
+        switch tutorial {
+        case .boatTarget:
+            if boats.count == 0 {
+                if points > 0 {
+                    print("Boat eaten")
+                    // must have eaten the boat. Next step!
+                    tutorial = .rockTarget
+                    spawnNewRock()
+                    return // do NOT spawn random item
+                } else {
+                    print("Boat died, try again")
+                    // boat mustve died somewhere, try again
+                    spawnNewBoat()
+                }
+            }
+        case .rockTarget, .rockTargetTryAgain:
+            if rocks.count == 0 {
+                if lives == 3 {
+                    print("Rock avoided")
+                    // must have avoided the rock. Next step!
+                    tutorial = .transition
+                    break // spawn random item
+                } else {
+                    print("Rock eaten, try again")
+                    // rock mustve accidentally been eaten, try again
+                    spawnNewRock()
+                    tutorial = .rockTargetTryAgain
+                    lives = 3 // you can't lose lives in the tutorial
+                    return // do NOT spawn random item
+                }
+            }
+        case .transition:
+            if points >= 10 {
+                // once points exceed 10 (i.e. two boats eaten), disable tutorial
+                tutorial = nil
+            }
+        case nil: break // ignore
+        }
+
+        guard tutorial == nil || tutorial == .transition else { return }
+
         let totalEatables = boats.count + rocks.count
         let shortfall = concurrentEatables - totalEatables
         guard shortfall > 0 else { return }

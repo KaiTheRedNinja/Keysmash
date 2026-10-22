@@ -44,6 +44,36 @@ struct GameView: View {
             Color.blue
                 .frame(height: segmentSeaLevel)
 
+            VStack {
+                Spacer()
+                    .frame(height: 300)
+
+                Text("Keysmash")
+                    .font(.system(size: 100, design: .serif))
+                Text("Spam your keys to control the waves")
+                    .font(.system(size: 30))
+                Text("Eat boat. Avoid rock.")
+                    .font(.system(size: 30))
+
+                Spacer()
+                    .frame(height: 50)
+
+                switch manager.tutorial {
+                case nil: EmptyView()
+                case .boatTarget:
+                    Text("You are Charybdis, the whirlpool monster.").font(.system(size: 20))
+                    Text("Use the waves to push the boat towards you!").font(.system(size: 20))
+                case .rockTarget:
+                    Text("Rocks hurt you. Use the waves to push rocks away.").font(.system(size: 20))
+                case .rockTargetTryAgain:
+                    Text("DONT EAT ROCKS!!! You'll lose lives next time >:(").font(.system(size: 20))
+                    Text("Rocks hurt you. Use the waves to push rocks away.").font(.system(size: 20))
+                case .transition:
+                    Text("Good luck! Even more rocks and boats will start spawning....").font(.system(size: 20))
+                }
+            }
+            .frame(height: screenSize.height, alignment: .top)
+
             // passive swell
             ForEach(3..<5) { multiple in
                 let scale = CGFloat(multiple)
@@ -81,6 +111,12 @@ struct GameView: View {
                 ForEach(manager.boats.elements, id: \.key) { (_, boat) in
                     BoatView(boat: boat)
                         .scaleEffect(.init(floatLiteral: 1 + min(0, boat.coordinate.y / segmentSeaLevel)))
+                        .overlay(alignment: .top) {
+                            if manager.tutorial != nil {
+                                Text("EAT ME!").font(.system(size: 20)).multilineTextAlignment(.center)
+                                    .offset(y: -80)
+                            }
+                        }
                         .offset(x: -50)
                         .offset(x: boat.coordinate.x, y: -boat.coordinate.y)
                 }
@@ -88,6 +124,12 @@ struct GameView: View {
                 ForEach(manager.rocks.elements, id: \.key) { (_, rock) in
                     RockView(rock: rock)
                         .scaleEffect(.init(floatLiteral: 1 + min(0, rock.coordinate.y / segmentSeaLevel)))
+                        .overlay(alignment: .top) {
+                            if manager.tutorial != nil {
+                                Text("DONT EAT!").font(.system(size: 20)).multilineTextAlignment(.center)
+                                    .offset(y: -80)
+                            }
+                        }
                         .offset(x: -30, y: 20)
                         .offset(x: rock.coordinate.x, y: -rock.coordinate.y)
                 }

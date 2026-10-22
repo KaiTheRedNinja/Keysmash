@@ -133,23 +133,35 @@ struct MonsterView: View {
 struct TentacleView: View {
     var manager: GameManager
 
+    struct TentacleInfo {
+        var baseAngleRad: CGFloat
+        var scale: CGFloat
+        var fillColor: Color
+        var livesRequirement: Int
+    }
+
     var body: some View {
         ZStack(alignment: .center) {
-            TentaclePair(manager: manager, height: 100, baseAngleRad: 10 * .pi / 180, fillStyle: Color.red)
+            ForEach([
+                TentacleInfo(baseAngleRad: 10 * .pi / 180, scale: 0.8, fillColor: .red, livesRequirement: 3),
+                TentacleInfo(baseAngleRad: 6 * .pi / 180, scale: 1.0, fillColor: .orange, livesRequirement: 2),
+                TentacleInfo(baseAngleRad: 2 * .pi / 180, scale: 1.2, fillColor: .yellow, livesRequirement: 1),
+                TentacleInfo(baseAngleRad: -2 * .pi / 180, scale: 1.2, fillColor: .green, livesRequirement: 2),
+                TentacleInfo(baseAngleRad: -6 * .pi / 180, scale: 1.0, fillColor: .purple, livesRequirement: 3)
+            ].enumerated(), id: \.offset) { _, info in
+                let isAlive = manager.lives >= info.livesRequirement
+
+                TentaclePair(
+                    manager: manager,
+                    height: 100,
+                    baseAngleRad: info.baseAngleRad,
+                    fillStyle: isAlive ? info.fillColor : Color.gray.opacity(0.8),
+                    animate: isAlive
+                )
                 .frame(width: manager.canvasWidth, height: 200)
-                .scaleEffect(0.8)
-            TentaclePair(manager: manager, height: 100, baseAngleRad: 6 * .pi / 180, fillStyle: Color.orange)
-                .frame(width: manager.canvasWidth, height: 200)
-                .scaleEffect(1.0)
-            TentaclePair(manager: manager, height: 100, baseAngleRad: 2 * .pi / 180, fillStyle: Color.yellow)
-                .frame(width: manager.canvasWidth, height: 200)
-                .scaleEffect(1.2)
-            TentaclePair(manager: manager, height: 100, baseAngleRad: -2 * .pi / 180, fillStyle: Color.green)
-                .frame(width: manager.canvasWidth, height: 200)
-                .scaleEffect(1.2)
-            TentaclePair(manager: manager, height: 100, baseAngleRad: -6 * .pi / 180, fillStyle: Color.purple)
-                .frame(width: manager.canvasWidth, height: 200)
-                .scaleEffect(1.0)
+                .scaleEffect(info.scale * (isAlive ? 1 : 0.6))
+                .animation(.easeInOut, value: isAlive)
+            }
         }
         .frame(width: manager.canvasWidth, height: 200)
     }
@@ -161,6 +173,8 @@ struct TentaclePair: View {
     var height: CGFloat
     var baseAngleRad: CGFloat
     var fillStyle: Color
+
+    var animate: Bool = true
 
     var body: some View {
         let maxThickness: CGFloat = 30
@@ -180,7 +194,7 @@ struct TentaclePair: View {
                     baseAngleRad * 100 // randomish offset
                     + x / 40 // sine moves along length
                     + (x > monsterMiddle ? -1 : 1)          // invert direction of travel depending on side. Always travels outwards.
-                    * Date.timeIntervalSinceReferenceDate   // sine travels with time
+                    * (animate ? Date.timeIntervalSinceReferenceDate : 1)   // sine travels with time
                 )
             }
 
@@ -202,7 +216,7 @@ struct TentaclePair: View {
                 return .init(
                     x: point.x,
                     y: height / 2 // center line
-                    - point.y // original height
+                    - (animate ? point.y : 0) // original height
                     - stageB.y // rotated change in height
                     + noise(x: point.x) // wavy tentacle
                 )

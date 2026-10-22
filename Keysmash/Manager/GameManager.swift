@@ -35,6 +35,9 @@ class GameManager {
     /// Whether the monster is currently eating
     var isEating: Bool = false
 
+    /// The current tutorial state, if a tutorial is currently active
+    var tutorial: TutorialState? = .boatTarget
+
     /// The number of boats and rocks on screen at any given point.
     /// If the total number of boats and rocks is lower than this number, one is
     /// created at random.
@@ -46,7 +49,7 @@ class GameManager {
     /// - 5 at 80 points
     /// - N at `5(N-1)^2` points
     var concurrentEatables: Int {
-        1 + Int(sqrt(CGFloat(points) / 5))
+        1 + Int(sqrt(max(0, CGFloat(points)) / 5))
     }
 
     @ObservationIgnored internal var keyHeight: [String: CGFloat]
