@@ -71,6 +71,23 @@ struct GameView: View {
                 case .transition:
                     Text("Good luck! Even more rocks and boats will start spawning....").font(.system(size: 20))
                 }
+
+                if manager.tutorial != nil {
+                    Spacer()
+                        .frame(height: 50)
+
+                    Button {
+                        manager.tutorial = nil
+                    } label: {
+                        Text("Skip Tutorial")
+                            .padding(10)
+                            .background {
+                                RoundedRectangle(cornerRadius: 20)
+                                    .fill(Color(nsColor: .selectedContentBackgroundColor))
+                            }
+                    }
+                    .buttonStyle(.plain)
+                }
             }
             .frame(height: screenSize.height, alignment: .top)
 
