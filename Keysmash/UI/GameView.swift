@@ -43,236 +43,16 @@ struct GameView: View {
             Spacer()
                 .frame(width: screenSize.width, height: screenSize.height, alignment: .center)
 
+            MountainsView()
+
             Color.blue
                 .frame(height: segmentSeaLevel)
 
-            VStack {
-                Spacer()
-                    .frame(height: 300)
+            backgroundText
 
-                Text("Keysmash")
-                    .font(.system(size: 100, design: .serif))
+            passiveSwell
 
-                switch manager.gameStatus {
-                case .playing:
-                    Text("Spam your keys to control the waves")
-                        .font(.system(size: 30))
-                    Text("Eat boat. Avoid rock.")
-                        .font(.system(size: 30))
-
-                    Spacer()
-                        .frame(height: 50)
-
-                    // show tutorial if tutorial is on right now
-                    switch manager.tutorial {
-                    case nil: EmptyView()
-                    case .boatTarget:
-                        Text("You are Charybdis, the whirlpool monster.").font(.system(size: 20))
-                        Text("Use the waves to push the boat towards you!").font(.system(size: 20))
-                    case .rockTarget:
-                        Text("Rocks hurt you. Use the waves to push rocks away.").font(.system(size: 20))
-                        Text("You can also press multiple keys at once: more keys = bigger wave.").font(.system(size: 20))
-                    case .rockTargetTryAgain:
-                        Text("DONT EAT ROCKS!!! You'll lose lives next time >:(").font(.system(size: 20))
-                        Text("Rocks hurt you. Use the waves to push rocks away.").font(.system(size: 20))
-                    case .transition:
-                        Text("Good luck! Even more rocks and boats will start spawning....").font(.system(size: 20))
-                    }
-
-                    if manager.tutorial != nil {
-                        Spacer()
-                            .frame(height: 50)
-
-                        Button {
-                            manager.tutorial = nil
-                        } label: {
-                            Text("Skip Tutorial")
-                                .padding(10)
-                                .background {
-                                    RoundedRectangle(cornerRadius: 20)
-                                        .fill(Color(nsColor: .selectedContentBackgroundColor))
-                                }
-                        }
-                        .buttonStyle(.plain)
-                    }
-                case .dead:
-                    Spacer()
-                        .frame(height: 50)
-
-                    // show dead screen
-                    Text("CHARYBDIS HAS BEEN FELLED")
-                        .font(.system(size: 50, design: .serif))
-
-                    Spacer()
-                        .frame(height: 30)
-
-                    Text("⛵ Eaten: \(manager.gameStats.boatsEaten)        🪨 Avoided: \(manager.gameStats.rocksAvoided)        ⛵ Lost: \(manager.gameStats.boatsLost)")
-                        .font(.system(size: 30))
-
-                    Spacer()
-                        .frame(height: 30)
-
-                    Text("Points: \(manager.points)        High Score: \(highScore)")
-                        .font(.system(size: 30))
-
-                    Spacer()
-                        .frame(height: 30)
-
-                    HStack(spacing: 30) {
-                        Button {
-                            manager.revive()
-                        } label: {
-                            Text("Play Again")
-                                .font(.system(size: 20))
-                                .padding(10)
-                                .background {
-                                    RoundedRectangle(cornerRadius: 20)
-                                        .fill(Color(nsColor: .selectedContentBackgroundColor))
-                                }
-                        }
-                        .buttonStyle(.plain)
-
-                        Button {
-                            manager.revive()
-                            manager.tutorial = .boatTarget
-                        } label: {
-                            Text("Tutorial")
-                                .font(.system(size: 20))
-                                .padding(10)
-                                .background {
-                                    RoundedRectangle(cornerRadius: 20)
-                                        .fill(Color(nsColor: .unemphasizedSelectedContentBackgroundColor))
-                                }
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-            }
-            .frame(height: screenSize.height, alignment: .top)
-
-            // passive swell
-            ForEach(3..<5) { multiple in
-                let scale = CGFloat(multiple)
-
-                Path { path in
-                    let passiveSwell: CGFloat = 5
-                    let sampleCount = 100
-
-                    path.move(to: .init(x: 0, y: 0))
-                    for sampleIndex in 0...sampleCount {
-                        let percent = CGFloat(sampleIndex)/CGFloat(sampleCount)
-                        let height = passiveSwell * sin(scale * (
-                            0.5 * CGFloat(sampleIndex) +
-                            (percent > 0.5 ? 1 : -1) * 2 * currentOffset
-                        ))
-                        path.addLine(to: .init(x: screenSize.width * percent, y: height - passiveSwell))
-                    }
-                    path.addLine(to: .init(x: screenSize.width, y: 0))
-                    path.addLine(to: .init(x: screenSize.width, y: segmentSeaLevel))
-                    path.addLine(to: .init(x: 0, y: segmentSeaLevel))
-                    path.addLine(to: .init(x: 0, y: 0))
-                    path.closeSubpath()
-                }
-                .fill(Color.blue.opacity(0.8))
-                .frame(height: segmentSeaLevel)
-            }
-
-            ZStack(alignment: .bottomLeading) {
-                // back of monster's throat
-                MonsterView(gameTimer: gameTimer, isEating: manager.isEating, lives: manager.lives, frontOnly: false)
-                    .padding(.leading, manager.monsterLocation)
-                    .frame(height: segmentSeaLevel, alignment: .topLeading)
-                    .padding(.bottom, -segmentSeaLevel)
-
-                ForEach(manager.boats.elements, id: \.key) { (_, boat) in
-                    BoatView(boat: boat)
-                        .scaleEffect(.init(floatLiteral: 1 + min(0, boat.coordinate.y / segmentSeaLevel)))
-                        .overlay(alignment: .top) {
-                            if manager.tutorial != nil {
-                                Text("EAT ME!").font(.system(size: 20)).multilineTextAlignment(.center)
-                                    .offset(y: -80)
-                            }
-                        }
-                        .offset(x: -50)
-                        .offset(x: boat.coordinate.x, y: -boat.coordinate.y)
-                }
-
-                ForEach(manager.rocks.elements, id: \.key) { (_, rock) in
-                    RockView(rock: rock)
-                        .scaleEffect(.init(floatLiteral: 1 + min(0, rock.coordinate.y / segmentSeaLevel)))
-                        .overlay(alignment: .top) {
-                            if manager.tutorial != nil {
-                                Text("DONT EAT!").font(.system(size: 20)).multilineTextAlignment(.center)
-                                    .offset(y: -80)
-                            }
-                        }
-                        .offset(x: -30, y: 20)
-                        .offset(x: rock.coordinate.x, y: -rock.coordinate.y)
-                }
-
-                let canvasMargin = (screenSize.width - manager.canvasWidth)/2
-                Path { path in
-                    path.move(to: .init(x: -canvasMargin, y: 0))
-
-                    path.addLine(to: manager.keyLine.start)
-
-                    for segment in manager.keyLine.segments {
-                        path.addCurve(
-                            to: segment.end,
-                            control1: segment.control1,
-                            control2: segment.control2
-                        )
-                    }
-
-                    path.addLine(to: .init(x: canvasMargin + (manager.keyLine.segments.last?.end.x ?? 0), y: 0))
-                    path.addLine(to: .init(x: canvasMargin + (manager.keyLine.segments.last?.end.x ?? 0), y: -segmentSeaLevel))
-                    path.addLine(to: .init(x: -canvasMargin, y: -segmentSeaLevel))
-                    path.closeSubpath()
-                }
-                .scale(x: 1, y: -1) // vertically flip
-                .fill(Color.blue.opacity(0.7))
-                .frame(height: segmentSwell, alignment: .bottom)
-                .padding(.bottom, segmentSeaLevel)
-                .padding(.horizontal, canvasMargin)
-                .reverseMask(alignment: .leading) {
-                    Rectangle()
-                        .frame(width: monsterWidth, height: segmentSwell + segmentSeaLevel)
-                        .padding(.leading, manager.monsterLocation + canvasMargin)
-                }
-                .padding(.bottom, -segmentSeaLevel)
-                .padding(.horizontal, -canvasMargin)
-
-                ForEach(manager.keyLayout.enumerated(), id: \.offset) { (_, key) in
-                    Text(key)
-                        .padding(.bottom, 5)
-                        .frame(
-                            width: segmentWidth,
-                            height: segmentWidth
-                        )
-                        .padding(.leading, (manager.keyLocations[key] ?? 0) - segmentWidth / 2)
-                        .offset(y: segmentWidth - (manager.keyHeight[key] ?? 0) + CGFloat(yLevel[key] ?? 0) * keyVerticalMisalignment)
-                }
-            }
-            .padding(.bottom, segmentSeaLevel)
-            .frame(width: manager.canvasWidth, height: screenSize.height, alignment: .bottom)
-            .overlay(alignment: .bottomLeading) {
-                ZStack(alignment: .topLeading) {
-                    TentacleView(manager: manager)
-                        .frame(height: segmentSeaLevel, alignment: .topLeading)
-                    MonsterView(gameTimer: gameTimer, isEating: manager.isEating, lives: manager.lives, frontOnly: true)
-                        .padding(.leading, manager.monsterLocation)
-                }
-                .frame(height: segmentSeaLevel, alignment: .topLeading)
-            }
-            .overlay(alignment: .topTrailing) {
-                VStack(alignment: .trailing) {
-                    Text(String(repeating: "🖤", count: 3-max(0, manager.lives)) + String(repeating: "❤️", count: max(0, manager.lives)))
-                    Text("\(manager.points) Points")
-
-                    StatsIndicator(stats: manager.gameStats)
-                }
-                .font(.largeTitle)
-            }
+            mainContent
         }
         .background {
             KeyCaptureView { event in
@@ -285,6 +65,244 @@ struct GameView: View {
         }
         .onChange(of: manager.points) { _, newValue in
             highScore = max(newValue, highScore)
+        }
+    }
+
+    var backgroundText: some View {
+        VStack {
+            Text("Keysmash")
+                .font(.system(size: 100, design: .serif))
+
+            switch manager.gameStatus {
+            case .playing:
+                Text("Spam your keys to control the waves")
+                    .font(.system(size: 30))
+                Text("Eat boat. Avoid rock.")
+                    .font(.system(size: 30))
+
+                Spacer()
+                    .frame(height: 50)
+
+                // show tutorial if tutorial is on right now
+                switch manager.tutorial {
+                case nil: EmptyView()
+                case .boatTarget:
+                    Text("You are Charybdis, the whirlpool monster.").font(.system(size: 20))
+                    Text("Use the waves to push the boat towards you!").font(.system(size: 20))
+                case .rockTarget:
+                    Text("Rocks hurt you. Use the waves to push rocks away.").font(.system(size: 20))
+                    Text("You can also press multiple keys at once: more keys = bigger wave.").font(.system(size: 20))
+                case .rockTargetTryAgain:
+                    Text("DONT EAT ROCKS!!! You'll lose lives next time >:(").font(.system(size: 20))
+                    Text("Rocks hurt you. Use the waves to push rocks away.").font(.system(size: 20))
+                case .transition:
+                    Text("Good luck! Even more rocks and boats will start spawning....").font(.system(size: 20))
+                }
+
+                if manager.tutorial != nil {
+                    Spacer()
+                        .frame(height: 50)
+
+                    Button {
+                        manager.tutorial = nil
+                    } label: {
+                        Text("Skip Tutorial")
+                            .padding(10)
+                            .background {
+                                RoundedRectangle(cornerRadius: 20)
+                                    .fill(Color(nsColor: .selectedContentBackgroundColor))
+                            }
+                    }
+                    .buttonStyle(.plain)
+                }
+            case .dead:
+                Spacer()
+                    .frame(height: 50)
+
+                // show dead screen
+                Text("CHARYBDIS HAS BEEN FELLED")
+                    .font(.system(size: 50, design: .serif))
+
+                Spacer()
+                    .frame(height: 30)
+
+                Text("⛵ Eaten: \(manager.gameStats.boatsEaten)        🪨 Avoided: \(manager.gameStats.rocksAvoided)        ⛵ Lost: \(manager.gameStats.boatsLost)")
+                    .font(.system(size: 30))
+
+                Spacer()
+                    .frame(height: 30)
+
+                Text("Points: \(manager.points)        High Score: \(highScore)")
+                    .font(.system(size: 30))
+
+                Spacer()
+                    .frame(height: 30)
+
+                HStack(spacing: 30) {
+                    Button {
+                        manager.revive()
+                    } label: {
+                        Text("Play Again")
+                            .font(.system(size: 20))
+                            .padding(10)
+                            .background {
+                                RoundedRectangle(cornerRadius: 20)
+                                    .fill(Color(nsColor: .selectedContentBackgroundColor))
+                            }
+                    }
+                    .buttonStyle(.plain)
+
+                    Button {
+                        manager.revive()
+                        manager.tutorial = .boatTarget
+                    } label: {
+                        Text("Tutorial")
+                            .font(.system(size: 20))
+                            .padding(10)
+                            .background {
+                                RoundedRectangle(cornerRadius: 20)
+                                    .fill(Color(nsColor: .unemphasizedSelectedContentBackgroundColor))
+                            }
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .background {
+            RoundedRectangle(cornerRadius: 50)
+                .fill(Color(white: 0.4))
+                .padding(.all, -50)
+                .blur(radius: 50)
+        }
+        .padding(.top, 200)
+        .frame(height: screenSize.height, alignment: .top)
+    }
+
+    var passiveSwell: some View {
+        // passive swell
+        ForEach(3..<5) { multiple in
+            let scale = CGFloat(multiple)
+
+            Path { path in
+                let passiveSwell: CGFloat = 5
+                let sampleCount = 100
+
+                path.move(to: .init(x: 0, y: 0))
+                for sampleIndex in 0...sampleCount {
+                    let percent = CGFloat(sampleIndex)/CGFloat(sampleCount)
+                    let height = passiveSwell * sin(scale * (
+                        0.5 * CGFloat(sampleIndex) +
+                        (percent > 0.5 ? 1 : -1) * 2 * currentOffset
+                    ))
+                    path.addLine(to: .init(x: screenSize.width * percent, y: height - passiveSwell))
+                }
+                path.addLine(to: .init(x: screenSize.width, y: 0))
+                path.addLine(to: .init(x: screenSize.width, y: segmentSeaLevel))
+                path.addLine(to: .init(x: 0, y: segmentSeaLevel))
+                path.addLine(to: .init(x: 0, y: 0))
+                path.closeSubpath()
+            }
+            .fill(Color.blue.opacity(0.8))
+            .frame(height: segmentSeaLevel)
+        }
+    }
+
+    var mainContent: some View {
+        ZStack(alignment: .bottomLeading) {
+            // back of monster's throat
+            MonsterView(gameTimer: gameTimer, isEating: manager.isEating, lives: manager.lives, frontOnly: false)
+                .padding(.leading, manager.monsterLocation)
+                .frame(height: segmentSeaLevel, alignment: .topLeading)
+                .padding(.bottom, -segmentSeaLevel)
+
+            ForEach(manager.boats.elements, id: \.key) { (_, boat) in
+                BoatView(boat: boat)
+                    .scaleEffect(.init(floatLiteral: 1 + min(0, boat.coordinate.y / segmentSeaLevel)))
+                    .overlay(alignment: .top) {
+                        if manager.tutorial != nil {
+                            Text("EAT ME!").font(.system(size: 20)).multilineTextAlignment(.center)
+                                .offset(y: -80)
+                        }
+                    }
+                    .offset(x: -50)
+                    .offset(x: boat.coordinate.x, y: -boat.coordinate.y)
+            }
+
+            ForEach(manager.rocks.elements, id: \.key) { (_, rock) in
+                RockView(rock: rock)
+                    .scaleEffect(.init(floatLiteral: 1 + min(0, rock.coordinate.y / segmentSeaLevel)))
+                    .overlay(alignment: .top) {
+                        if manager.tutorial != nil {
+                            Text("DONT EAT!").font(.system(size: 20)).multilineTextAlignment(.center)
+                                .offset(y: -80)
+                        }
+                    }
+                    .offset(x: -30, y: 20)
+                    .offset(x: rock.coordinate.x, y: -rock.coordinate.y)
+            }
+
+            let canvasMargin = (screenSize.width - manager.canvasWidth)/2
+            Path { path in
+                path.move(to: .init(x: -canvasMargin, y: 0))
+
+                path.addLine(to: manager.keyLine.start)
+
+                for segment in manager.keyLine.segments {
+                    path.addCurve(
+                        to: segment.end,
+                        control1: segment.control1,
+                        control2: segment.control2
+                    )
+                }
+
+                path.addLine(to: .init(x: canvasMargin + (manager.keyLine.segments.last?.end.x ?? 0), y: 0))
+                path.addLine(to: .init(x: canvasMargin + (manager.keyLine.segments.last?.end.x ?? 0), y: -segmentSeaLevel))
+                path.addLine(to: .init(x: -canvasMargin, y: -segmentSeaLevel))
+                path.closeSubpath()
+            }
+            .scale(x: 1, y: -1) // vertically flip
+            .fill(Color.blue.opacity(0.7))
+            .frame(height: segmentSwell, alignment: .bottom)
+            .padding(.bottom, segmentSeaLevel)
+            .padding(.horizontal, canvasMargin)
+            .reverseMask(alignment: .leading) {
+                Rectangle()
+                    .frame(width: monsterWidth, height: segmentSwell + segmentSeaLevel)
+                    .padding(.leading, manager.monsterLocation + canvasMargin)
+            }
+            .padding(.bottom, -segmentSeaLevel)
+            .padding(.horizontal, -canvasMargin)
+
+            ForEach(manager.keyLayout.enumerated(), id: \.offset) { (_, key) in
+                Text(key)
+                    .padding(.bottom, 5)
+                    .frame(
+                        width: segmentWidth,
+                        height: segmentWidth
+                    )
+                    .padding(.leading, (manager.keyLocations[key] ?? 0) - segmentWidth / 2)
+                    .offset(y: segmentWidth - (manager.keyHeight[key] ?? 0) + CGFloat(yLevel[key] ?? 0) * keyVerticalMisalignment)
+            }
+        }
+        .padding(.bottom, segmentSeaLevel)
+        .frame(width: manager.canvasWidth, height: screenSize.height, alignment: .bottom)
+        .overlay(alignment: .bottomLeading) {
+            ZStack(alignment: .topLeading) {
+                TentacleView(manager: manager)
+                    .frame(height: segmentSeaLevel, alignment: .topLeading)
+                MonsterView(gameTimer: gameTimer, isEating: manager.isEating, lives: manager.lives, frontOnly: true)
+                    .padding(.leading, manager.monsterLocation)
+            }
+            .frame(height: segmentSeaLevel, alignment: .topLeading)
+        }
+        .overlay(alignment: .topTrailing) {
+            VStack(alignment: .trailing) {
+                Text(String(repeating: "🖤", count: 3-max(0, manager.lives)) + String(repeating: "❤️", count: max(0, manager.lives)))
+                Text("\(manager.points) Points")
+
+                StatsIndicator(stats: manager.gameStats)
+            }
+            .font(.largeTitle)
         }
     }
 }

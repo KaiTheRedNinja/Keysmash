@@ -18,8 +18,5 @@ struct ContentView: View {
             .scaleEffect(.init(width: scale, height: scale), anchor: .center)
             .frame(width: proxy.size.width, height: proxy.size.height)
         }
-        .background {
-            Color.blue.opacity(0.1)
-        }
     }
 }
