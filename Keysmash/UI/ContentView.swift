@@ -15,7 +15,6 @@ struct ContentView: View {
             }
             .frame(width: screenSize.width, height: screenSize.height, alignment: .center)
             .clipped()
-            .border(Color.red)
             .scaleEffect(.init(width: scale, height: scale), anchor: .center)
             .frame(width: proxy.size.width, height: proxy.size.height)
         }

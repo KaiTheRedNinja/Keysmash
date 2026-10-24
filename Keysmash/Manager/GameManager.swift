@@ -27,6 +27,8 @@ class GameManager {
 
     /// The current game status
     var gameStatus: GameStatus = .playing
+    /// The current stats
+    var gameStats: GameStats = .zero
     /// The number of lives you have. You lose one every time you eat a rock.
     var lives: Int = 3
     /// The number of points you have. You gain
@@ -109,10 +111,20 @@ class GameManager {
         self.points = 0
         self.isEating = false
         self.gameStatus = .playing
+        self.gameStats = .zero
     }
 }
 
 enum GameStatus {
     case playing
     case dead
+}
+
+struct GameStats: Equatable {
+    var boatsEaten: Int
+    var boatsLost: Int
+    var rocksEaten: Int
+    var rocksAvoided: Int
+
+    static let zero = GameStats(boatsEaten: 0, boatsLost: 0, rocksEaten: 0, rocksAvoided: 0)
 }

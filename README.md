@@ -10,7 +10,7 @@ Keysmash is a game where you play as Charybdis, AKA the whirlpool monster. Your 
   - [x] Smooth (bezier?)
   - [x] Extend to fit the screen
   - [x] Letters vertically offset to their position on keyboards
-  - [ ] Gradient look
+  - [x] Gradient look
 - [x] Boats
   - [x] Starting velocity
   - [x] Velocity decay over time
@@ -24,8 +24,8 @@ Keysmash is a game where you play as Charybdis, AKA the whirlpool monster. Your 
   - [x] In the middle of the waves
   - [x] Eats boats and rocks
   - [x] Has tentacles going beneath the waves
-- [ ] Game loop
+- [x] Game loop
   - [x] Automatically spawn boats and rocks
     - [x] Spawn more boats and rocks as time goes on
   - [x] Keep track of points and lives
-  - [ ] Death
+  - [x] Death

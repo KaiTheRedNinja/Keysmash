@@ -66,7 +66,18 @@ struct BoatView: View {
                 .fill(Color.brown)
                 .frame(width: 100, height: 20)
                 .overlay {
-                    Text(String(format: "%.0f", boat.velocity))
+                    HStack {
+                        ForEach(0..<6) { _ in
+                            ZStack {
+                                Circle()
+                                    .fill(Color.gray)
+                                Circle()
+                                    .stroke(Color.black, lineWidth: 1)
+                            }
+                            .frame(width: 6, height: 6)
+                            .padding(.bottom, 3)
+                        }
+                    }
                 }
         }
         .rotationEffect(boat.angle, anchor: .bottom)

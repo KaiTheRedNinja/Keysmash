@@ -104,13 +104,19 @@ struct GameView: View {
                         .font(.system(size: 50, design: .serif))
 
                     Spacer()
-                        .frame(height: 20)
+                        .frame(height: 30)
 
-                    Text("Points: \(manager.points) | High Score: \(highScore)")
+                    Text("⛵ Eaten: \(manager.gameStats.boatsEaten)        🪨 Avoided: \(manager.gameStats.rocksAvoided)        ⛵ Lost: \(manager.gameStats.boatsLost)")
                         .font(.system(size: 30))
 
                     Spacer()
-                        .frame(height: 20)
+                        .frame(height: 30)
+
+                    Text("Points: \(manager.points)        High Score: \(highScore)")
+                        .font(.system(size: 30))
+
+                    Spacer()
+                        .frame(height: 30)
 
                     HStack(spacing: 30) {
                         Button {
@@ -260,8 +266,10 @@ struct GameView: View {
             }
             .overlay(alignment: .topTrailing) {
                 VStack(alignment: .trailing) {
-                    Text(String(repeating: "❤️", count: max(0, manager.lives)))
-                    Text("\(manager.points)")
+                    Text(String(repeating: "🖤", count: 3-max(0, manager.lives)) + String(repeating: "❤️", count: max(0, manager.lives)))
+                    Text("\(manager.points) Points")
+
+                    StatsIndicator(stats: manager.gameStats)
                 }
                 .font(.largeTitle)
             }

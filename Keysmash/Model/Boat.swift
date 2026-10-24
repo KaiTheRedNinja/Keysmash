@@ -64,10 +64,12 @@ struct Boat: Eatable {
 
     func onEat(manager: GameManager) {
         manager.points += 5
+        manager.gameStats.boatsEaten += 1
     }
 
     func onLost(manager: GameManager) {
         manager.points -= 3
+        manager.gameStats.boatsLost += 1
     }
 }
 
@@ -87,9 +89,11 @@ struct Rock: Eatable {
 
     func onEat(manager: GameManager) {
         manager.lives -= 1
+        manager.gameStats.rocksEaten += 1
     }
 
     func onLost(manager: GameManager) {
         manager.points += 1
+        manager.gameStats.rocksAvoided += 1
     }
 }

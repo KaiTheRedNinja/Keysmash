@@ -13,19 +13,27 @@ struct RockView: View {
     @State var bouncing: Bool = false
 
     var body: some View {
-        Star(corners: rock.sideCount, smoothness: 0.8)
-            .fill(Color.gray)
-            .frame(width: 60, height: 60)
-            .overlay {
-                Text(String(format: "%.0f", rock.velocity))
-            }
-            .rotationEffect(rock.angle, anchor: .center)
-            .animation(.interactiveSpring, value: rock.angle)
-            .offset(y: bouncing ? 5 : 0)
-            .animation(Animation.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: bouncing)
-            .onAppear {
-                self.bouncing.toggle()
-            }
+        ZStack {
+            Star(corners: rock.sideCount, smoothness: 0.85)
+                .fill(Color.init(white: 0.7))
+                .rotationEffect(.degrees(180 / CGFloat(rock.sideCount)))
+            Star(corners: rock.sideCount, smoothness: 0.8)
+                .fill(Color.init(white: 0.6))
+            Star(corners: rock.sideCount, smoothness: 0.85)
+                .fill(Color.init(white: 0.5))
+                .padding(10)
+            Star(corners: rock.sideCount, smoothness: 0.7)
+                .fill(Color.init(white: 0.4))
+                .padding(20)
+        }
+        .frame(width: 60, height: 60)
+        .rotationEffect(rock.angle, anchor: .center)
+        .animation(.interactiveSpring, value: rock.angle)
+        .offset(y: bouncing ? 5 : 0)
+        .animation(Animation.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: bouncing)
+        .onAppear {
+            self.bouncing.toggle()
+        }
     }
 }
 
