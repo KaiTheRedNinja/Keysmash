@@ -18,42 +18,52 @@ extension GameManager {
         guard let prevTick else { return }
         let dt = date.timeIntervalSince(prevTick)
 
-        calculateVelocities(dt: dt)
+        if gameStatus == .playing {
+            calculateVelocities(dt: dt)
+        }
 
         isEating = boats.values.contains(where: { $0.status == .eaten }) || rocks.values.contains(where: { $0.status == .eaten })
+
+        if lives <= 0 {
+            lives = 0
+            gameStatus = .dead
+        }
     }
 
     private func calculateHeights(date: Date) {
-        // recalculate all key heights
-        let newKeyHeight = currentlyPressedKeys.mapValues { state in
-            if state.isPressed {
-                // increasing decay curve
-                segmentSwell * (
-                    1 - exp(-3/activationTime * date.timeIntervalSince(state.lastChanged))
-                )
-            } else {
-                // decreasing decay curve
-                segmentSwell * (
-                    exp(-3/deactivationTime * date.timeIntervalSince(state.lastChanged))
-                )
-            }
-        }
-        // "blur" the key heights
-        let blurRadius = 1 // 1 samples on either side
-        keyHeight = [:]
-        func blur(layout: [String]) {
-            for (index, key) in layout.enumerated() {
-                let samples = ((-blurRadius + index)...(blurRadius + index)).compactMap { sampleIndex in
-                    if 0 <= sampleIndex && sampleIndex < layout.count {
-                        newKeyHeight[layout[sampleIndex]] ?? 0
-                    } else { nil }
+        // only update heights if currently playing - if not, play the idle wave animation but nothing else
+        if gameStatus == .playing {
+            // recalculate all key heights
+            let newKeyHeight = currentlyPressedKeys.mapValues { state in
+                if state.isPressed {
+                    // increasing decay curve
+                    segmentSwell * (
+                        1 - exp(-3/activationTime * date.timeIntervalSince(state.lastChanged))
+                    )
+                } else {
+                    // decreasing decay curve
+                    segmentSwell * (
+                        exp(-3/deactivationTime * date.timeIntervalSince(state.lastChanged))
+                    )
                 }
-                keyHeight[key] = samples.reduce(0, +) / CGFloat(samples.count)
             }
+            // "blur" the key heights
+            let blurRadius = 1 // 1 samples on either side
+            keyHeight = [:]
+            func blur(layout: [String]) {
+                for (index, key) in layout.enumerated() {
+                    let samples = ((-blurRadius + index)...(blurRadius + index)).compactMap { sampleIndex in
+                        if 0 <= sampleIndex && sampleIndex < layout.count {
+                            newKeyHeight[layout[sampleIndex]] ?? 0
+                        } else { nil }
+                    }
+                    keyHeight[key] = samples.reduce(0, +) / CGFloat(samples.count)
+                }
+            }
+            // we blur the LHS and RHS of the monster seperately
+            blur(layout: Array(keyLayout[..<(keyLayout.count / 2)]))
+            blur(layout: Array(keyLayout[(keyLayout.count / 2)...]))
         }
-        // we blur the LHS and RHS of the monster seperately
-        blur(layout: Array(keyLayout[..<(keyLayout.count / 2)]))
-        blur(layout: Array(keyLayout[(keyLayout.count / 2)...]))
 
         // we have the bezier, but also add points for the canvas's and the monster's LHS and RHS.
         let points: [CGPoint] = [

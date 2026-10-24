@@ -29,6 +29,8 @@ struct GameView: View {
 
     @State var currentOffset: TimeInterval = 0
 
+    @AppStorage("highScore") var highScore: Int = 0
+
     var yLevel: [String: Int] = .init(
         "QWERTYUIOP[]\\".map { (String($0), 0) } +
         "ASDFGHJKL;'".map { (String($0), 1) } +
@@ -50,43 +52,94 @@ struct GameView: View {
 
                 Text("Keysmash")
                     .font(.system(size: 100, design: .serif))
-                Text("Spam your keys to control the waves")
-                    .font(.system(size: 30))
-                Text("Eat boat. Avoid rock.")
-                    .font(.system(size: 30))
 
-                Spacer()
-                    .frame(height: 50)
+                switch manager.gameStatus {
+                case .playing:
+                    Text("Spam your keys to control the waves")
+                        .font(.system(size: 30))
+                    Text("Eat boat. Avoid rock.")
+                        .font(.system(size: 30))
 
-                switch manager.tutorial {
-                case nil: EmptyView()
-                case .boatTarget:
-                    Text("You are Charybdis, the whirlpool monster.").font(.system(size: 20))
-                    Text("Use the waves to push the boat towards you!").font(.system(size: 20))
-                case .rockTarget:
-                    Text("Rocks hurt you. Use the waves to push rocks away.").font(.system(size: 20))
-                case .rockTargetTryAgain:
-                    Text("DONT EAT ROCKS!!! You'll lose lives next time >:(").font(.system(size: 20))
-                    Text("Rocks hurt you. Use the waves to push rocks away.").font(.system(size: 20))
-                case .transition:
-                    Text("Good luck! Even more rocks and boats will start spawning....").font(.system(size: 20))
-                }
-
-                if manager.tutorial != nil {
                     Spacer()
                         .frame(height: 50)
 
-                    Button {
-                        manager.tutorial = nil
-                    } label: {
-                        Text("Skip Tutorial")
-                            .padding(10)
-                            .background {
-                                RoundedRectangle(cornerRadius: 20)
-                                    .fill(Color(nsColor: .selectedContentBackgroundColor))
-                            }
+                    // show tutorial if tutorial is on right now
+                    switch manager.tutorial {
+                    case nil: EmptyView()
+                    case .boatTarget:
+                        Text("You are Charybdis, the whirlpool monster.").font(.system(size: 20))
+                        Text("Use the waves to push the boat towards you!").font(.system(size: 20))
+                    case .rockTarget:
+                        Text("Rocks hurt you. Use the waves to push rocks away.").font(.system(size: 20))
+                        Text("You can also press multiple keys at once: more keys = bigger wave.").font(.system(size: 20))
+                    case .rockTargetTryAgain:
+                        Text("DONT EAT ROCKS!!! You'll lose lives next time >:(").font(.system(size: 20))
+                        Text("Rocks hurt you. Use the waves to push rocks away.").font(.system(size: 20))
+                    case .transition:
+                        Text("Good luck! Even more rocks and boats will start spawning....").font(.system(size: 20))
                     }
-                    .buttonStyle(.plain)
+
+                    if manager.tutorial != nil {
+                        Spacer()
+                            .frame(height: 50)
+
+                        Button {
+                            manager.tutorial = nil
+                        } label: {
+                            Text("Skip Tutorial")
+                                .padding(10)
+                                .background {
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .fill(Color(nsColor: .selectedContentBackgroundColor))
+                                }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                case .dead:
+                    Spacer()
+                        .frame(height: 50)
+
+                    // show dead screen
+                    Text("CHARYBDIS HAS BEEN FELLED")
+                        .font(.system(size: 50, design: .serif))
+
+                    Spacer()
+                        .frame(height: 20)
+
+                    Text("Points: \(manager.points) | High Score: \(highScore)")
+                        .font(.system(size: 30))
+
+                    Spacer()
+                        .frame(height: 20)
+
+                    HStack(spacing: 30) {
+                        Button {
+                            manager.revive()
+                        } label: {
+                            Text("Play Again")
+                                .font(.system(size: 20))
+                                .padding(10)
+                                .background {
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .fill(Color(nsColor: .selectedContentBackgroundColor))
+                                }
+                        }
+                        .buttonStyle(.plain)
+
+                        Button {
+                            manager.revive()
+                            manager.tutorial = .boatTarget
+                        } label: {
+                            Text("Tutorial")
+                                .font(.system(size: 20))
+                                .padding(10)
+                                .background {
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .fill(Color(nsColor: .unemphasizedSelectedContentBackgroundColor))
+                                }
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
             }
             .frame(height: screenSize.height, alignment: .top)
@@ -120,7 +173,7 @@ struct GameView: View {
 
             ZStack(alignment: .bottomLeading) {
                 // back of monster's throat
-                MonsterView(gameTimer: gameTimer, isEating: manager.isEating, frontOnly: false)
+                MonsterView(gameTimer: gameTimer, isEating: manager.isEating, lives: manager.lives, frontOnly: false)
                     .padding(.leading, manager.monsterLocation)
                     .frame(height: segmentSeaLevel, alignment: .topLeading)
                     .padding(.bottom, -segmentSeaLevel)
@@ -200,14 +253,14 @@ struct GameView: View {
                 ZStack(alignment: .topLeading) {
                     TentacleView(manager: manager)
                         .frame(height: segmentSeaLevel, alignment: .topLeading)
-                    MonsterView(gameTimer: gameTimer, isEating: manager.isEating, frontOnly: true)
+                    MonsterView(gameTimer: gameTimer, isEating: manager.isEating, lives: manager.lives, frontOnly: true)
                         .padding(.leading, manager.monsterLocation)
                 }
                 .frame(height: segmentSeaLevel, alignment: .topLeading)
             }
             .overlay(alignment: .topTrailing) {
                 VStack(alignment: .trailing) {
-                    Text(String(repeating: "❤️", count: manager.lives))
+                    Text(String(repeating: "❤️", count: max(0, manager.lives)))
                     Text("\(manager.points)")
                 }
                 .font(.largeTitle)
@@ -221,6 +274,9 @@ struct GameView: View {
         .onReceive(gameTimer) { date in
             manager.tick(date: date)
             currentOffset = Date.timeIntervalSinceReferenceDate
+        }
+        .onChange(of: manager.points) { _, newValue in
+            highScore = max(newValue, highScore)
         }
     }
 }

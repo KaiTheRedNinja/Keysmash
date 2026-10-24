@@ -25,6 +25,8 @@ class GameManager {
     var boats: OrderedDictionary<UUID, Boat>
     var rocks: OrderedDictionary<UUID, Rock>
 
+    /// The current game status
+    var gameStatus: GameStatus = .playing
     /// The number of lives you have. You lose one every time you eat a rock.
     var lives: Int = 3
     /// The number of points you have. You gain
@@ -99,4 +101,18 @@ class GameManager {
             lastChanged: .now
         )
     }
+
+    func revive() {
+        self.rocks = [:]
+        self.boats = [:]
+        self.lives = 3
+        self.points = 0
+        self.isEating = false
+        self.gameStatus = .playing
+    }
+}
+
+enum GameStatus {
+    case playing
+    case dead
 }

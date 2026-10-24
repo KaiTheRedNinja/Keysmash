@@ -11,12 +11,16 @@ import Combine
 struct MonsterView: View {
     var gameTimer = Timer.publish(every: 1/60, on: .main, in: .default).autoconnect()
     var isEating: Bool = false
+    var lives: Int = 3
 
     @State var offset: TimeInterval = 0
 
     var frontOnly: Bool = false
 
     var body: some View {
+        // saturation maxxes out at 0.8, bottoms out at 0.2
+        let saturation = 0.2 + 0.6 * (CGFloat(lives) / 3.0)
+
         ZStack(alignment: .top) {
             Color.white.opacity(0.01)
 
@@ -33,9 +37,9 @@ struct MonsterView: View {
 
                     ZStack {
                         Ellipse()
-                            .fill(Color(hue: percentage, saturation: 0.8, brightness: 1.0))
+                            .fill(Color(hue: percentage, saturation: saturation, brightness: 1.0))
                         Ellipse()
-                            .stroke(Color(hue: percentage, saturation: 0.8, brightness: 0.7), lineWidth: 1)
+                            .stroke(Color(hue: percentage, saturation: saturation, brightness: 0.7), lineWidth: 1)
                     }
                     .frame(width: scale * monsterWidth * horizontalScale, height: scale * monsterWidth/3)
                     .offset(
@@ -61,9 +65,9 @@ struct MonsterView: View {
 
                 ZStack {
                     Ellipse()
-                        .fill(Color(hue: percentage, saturation: 0.8, brightness: 0.4))
+                        .fill(Color(hue: percentage, saturation: saturation, brightness: 0.4))
                     Ellipse()
-                        .stroke(Color(hue: percentage, saturation: 0.8, brightness: 0.2), lineWidth: 1)
+                        .stroke(Color(hue: percentage, saturation: saturation, brightness: 0.2), lineWidth: 1)
                 }
                 .frame(width: monsterWidth, height: monsterWidth/3)
                 .offset(
